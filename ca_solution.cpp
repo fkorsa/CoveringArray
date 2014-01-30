@@ -20,8 +20,8 @@ void CA_Solution::testAlgo()
 {
     ifstream infile(m_inputFileData);
     ofstream outfile(m_outputFileStats);
-    int minRows, maxRows;
-    double meanTime;
+    int minRows, maxRows, rows[100];
+    double meanTime, meanRows, standardDev;
     if(outfile.is_open())
     {
         while (infile >> m_nbSymbols >> m_nbColumns)
@@ -32,6 +32,7 @@ void CA_Solution::testAlgo()
             for(unsigned int indexAlpha=0; indexAlpha<m_nbAlphas; indexAlpha++)
             {
                 meanTime = 0;
+                meanRows = 0;
                 for(int i=0; i<100; i++)
                 {
                     chrono::time_point<chrono::system_clock> start, end;
@@ -54,9 +55,19 @@ void CA_Solution::testAlgo()
                         maxRows = m_currentMat->m_nbRows;
                     }
                     meanTime += 1000*realTime.count();
+                    rows[i] = m_currentMat->m_nbRows;
+                    meanRows += m_currentMat->m_nbRows;
+
                 }
-                outfile << "Nombre_lignes_min nombre_lignes_max temps_moyen" << endl;
-                outfile << minRows << " " << maxRows << " " << meanTime/100 << endl;
+                meanRows /= 100;
+                standardDev = 0;
+                for(int i=0; i<100; i++)
+                {
+                    standardDev += pow(rows[i]-meanRows, 2);
+                }
+                standardDev = sqrt(standardDev/100);
+                outfile << "Nombre_lignes_min nombre_lignes_max ecart_type temps_moyen" << endl;
+                outfile << minRows << " " << maxRows << " " << standardDev << " " << meanTime/100 << endl;
             }
         }
         outfile.close();
@@ -348,42 +359,4 @@ int CA_Solution::chooseSymbol(double* symbolsScores, double scoresSum, double al
         break;
     }
     return bestSymbol;
-}
-
-void CA_Solution::setInputFileAlphas(const char* filename)
-{
-    strncpy(m_inputFileAlphas, filename, 100);
-}
-
-void CA_Solution::setInputFileMatrix(const char* filename)
-{
-    strncpy(m_inputFileMatrix, filename, 100);
-}
-
-void CA_Solution::setOutputFileMatrix(const char* filename)
-{
-    strncpy(m_outputFileMatrix, filename, 100);
-}
-
-void CA_Solution::setOutputFileStats(const char* filename)
-{
-    strncpy(m_outputFileStats, filename, 100);
-}
-
-void CA_Solution::getAlphasFromFile(const char* filename)
-{
-    ifstream infile(filename);
-    m_nbAlphas = 0;
-    while (infile >> m_alphasVector[m_nbAlphas++])
-    {
-        if(m_nbAlphas==m_alphasVector.size())
-        {
-            m_alphasVector.insert(m_alphasVector.end(), 5, 0);
-        }
-    }
-}
-
-void CA_Solution::setAlgoType(ALGO_TYPE algoType)
-{
-    m_algoType = algoType;
 }

@@ -19,12 +19,6 @@ class CA_Solution
 public:
     CA_Solution();
     ~CA_Solution();
-    void setAlgoType(ALGO_TYPE algoType);
-    void setInputFileAlphas(const char* filename);
-    void setInputFileMatrix(const char* filename);
-    void setOutputFileMatrix(const char* filename);
-    void setOutputFileStats(const char* filename);
-    void getAlphasFromFile(const char* filename);
     void saveMatrixToFile(const char* filename);
     void getMatrixFromFile(const char* filename);
     void testAlgo();
