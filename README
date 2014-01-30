@@ -1,0 +1,6 @@
+Pour compiler mon programme, il suffit d'utiliser le makefile présent dans le dossier. Ce makefile utilise g++; mon programme compile (au moins) pour la version 4.8.1 de g++.
+
+Exemple d'exécution :
+cd /path/to/Covering_Array
+make && ./covering_array
+
