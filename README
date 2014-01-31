@@ -4,3 +4,4 @@ Exemple d'exécution :
 cd /path/to/Covering_Array
 make && ./covering_array
 
+Le dossier d'exécution doit contenir un fichier nommé "inputData" contenant les paramètres des matrices. Le programme génère un fichier nommé "outputStats" contenant tous les résultats des tests. Il suffit alors de copier coller le contenu de outputStats dans la "sheet9" du fichier "results.ods" pour actualiser les données. Les moyennes, écart-types etc sont dans la sheet "resume" qui est la première feuille de results.ods. Les histogrammes sont dans le reste des feuilles.

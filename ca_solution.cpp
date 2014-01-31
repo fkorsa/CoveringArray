@@ -2,9 +2,9 @@
 
 CA_Solution::CA_Solution() :
     m_currentMat(NULL),
-    m_nbSymbols(3),
+    m_nbSymbols(2),
     m_nbErrors(0),
-    m_nbColumns(20),
+    m_nbColumns(4),
     m_nbAlphas(7),
     m_algoType(RANDOM_LINEAR)
 {
@@ -144,7 +144,7 @@ void CA_Solution::generateMatrix(double alpha)
             }
         }
     }
-    double *symbolsScores = new double[m_nbSymbols], scoresSum, invNbColumns = 1/(double)m_nbColumns;
+    double *symbolsScores = new double[m_nbSymbols], scoresSum, invNbColumns = 1/(double)(m_nbColumns*m_nbSymbols);
     int nbRows = 0, bestSymbol;
     int currentColumn, currentSymbol, currentSymbol2, offsetRow, otherColumn;
     m_nbSymbols = m_nbSymbols;
@@ -244,8 +244,9 @@ int CA_Solution::getRowsNumber()
 
 int CA_Solution::chooseSymbol(double* symbolsScores, double scoresSum, double alpha)
 {
-    int currentSymbol, maxScore, bestSymbol, bestScoreSymbol, nbBestScoreSymbols, *bestScoreSymbols = new int[m_nbSymbols];
-    double invNbSymbols = 1/(double)m_nbSymbols, cumulatedSum, randomNumber, pk, expSum, *expProbas = new double[m_nbSymbols];
+    int currentSymbol, bestSymbol, bestScoreSymbol, nbBestScoreSymbols, *bestScoreSymbols = new int[m_nbSymbols];
+    double invNbSymbols = 1/(double)m_nbSymbols, cumulatedSum, randomNumber, pi, expSum, *expProbas = new double[m_nbSymbols];
+    double maxScore;
     switch(m_algoType)
     {
     case PURE_GREEDY:
@@ -299,8 +300,8 @@ int CA_Solution::chooseSymbol(double* symbolsScores, double scoresSum, double al
             {
                 for(currentSymbol=0; currentSymbol<m_nbSymbols; currentSymbol++)
                 {
-                    pk = symbolsScores[currentSymbol]/(double)scoresSum;
-                    cumulatedSum += (pk - invNbSymbols)*alpha + pk;
+                    pi = symbolsScores[currentSymbol]/(double)scoresSum;
+                    cumulatedSum += (pi - invNbSymbols)*alpha + pi;
                     if(randomNumber <= cumulatedSum)
                     {
                         bestSymbol = currentSymbol;
@@ -322,8 +323,8 @@ int CA_Solution::chooseSymbol(double* symbolsScores, double scoresSum, double al
                 }
                 for(currentSymbol=0; currentSymbol<m_nbSymbols; currentSymbol++)
                 {
-                    pk = symbolsScores[currentSymbol]/(double)scoresSum;
-                    cumulatedSum += pk - pk*alpha;
+                    pi = symbolsScores[currentSymbol]/(double)scoresSum;
+                    cumulatedSum += pi - pi*alpha;
                     if(currentSymbol == bestScoreSymbol)
                     {
                         cumulatedSum += alpha;
