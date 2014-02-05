@@ -3,8 +3,9 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
+#include <cstdlib>
+#include <math.h>
 
-#include <windows.h>
 using namespace std;
 
 #include "CA_Solution.h"

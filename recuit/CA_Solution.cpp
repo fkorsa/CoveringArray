@@ -12,7 +12,7 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 
 void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à partir d'une solution
 
-	ofstream fichier(chemin);
+    ofstream fichier(chemin.c_str());
 
 	int erreurs = this->verifierSolution();
 
@@ -42,13 +42,13 @@ int CA_Solution::verifierSolution() { // vérifie si une solution est valide sach
 
 	bool**** contraintes; // contraintes[k][k][v][v]
 
-	contraintes = (bool****) malloc(k*sizeof(bool***));
+    contraintes = new bool***[k];
 	for(int i1=0; i1<k; i1++) {
-		contraintes[i1] = (bool***) malloc(k*sizeof(bool**));
+        contraintes[i1] = new bool**[k];
 		for(int i2=0; i2<k; i2++) {
-			contraintes[i1][i2] = (bool**) malloc(v*sizeof(bool*));
+            contraintes[i1][i2] = new bool*[v];
 			for(int i3=0; i3<v; i3++) {
-				contraintes[i1][i2][i3] = (bool*) malloc(v*sizeof(bool));
+                contraintes[i1][i2][i3] = new bool[v];
 				for(int i4=0; i4<v; i4++) {
 					contraintes[i1][i2][i3][i4] = false;
 				}
