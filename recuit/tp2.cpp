@@ -38,9 +38,10 @@ CA_Solution* lireFichierSolution(const char* chemin)
 CA_Solution* configurationAleatoire(int v, int k, int N) {
 	vector<int> matrice(N*k);
 
-	for(int i=0; i<N*k; i++){
+    for(int i=0; i<N*k; i++)
+    {
 		int symb = rand()%v;
-		matrice[i] = v;
+        matrice[i] = symb;
 	}
 
 	CA_Solution* configuration = new CA_Solution(v, k, matrice);
