@@ -57,17 +57,11 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
     ofstream& fichierLocal = *fichier;
     double T = tempInit;
     int sleepCpt = 0, itCpt = 0, statiqueCpt = 0, totalIt = 0;
-    //trial mov fmin fmax acc
-    int vraisMouvement = 0, fmin, fmax, tauxAcceptation;
+    int vraisMouvement = 0, fmin, fmax;
 	CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
 
 	int coutMeilleure = meilleureConfig->verifierSolution();
-
-    if(fichier)
-    {
-
-    }
 
     while(statiqueCpt < nombreEssais)
     {
@@ -102,6 +96,7 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
 				coutMeilleure = coutTest;
                 statiqueCpt = 0;
             }
+            vraisMouvement++;
         }
         statiqueCpt++;
 
@@ -119,6 +114,20 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
         }
         itCpt++;
         totalIt++;
+        if(coutTest < fmin)
+        {
+            fmin = coutTest;
+        }
+        if(coutTest > fmax)
+        {
+            fmax = coutTest;
+        }
+        if(fichierLocal && totalIt%50 == 0)
+        {
+            fichierLocal << totalIt << " " << vraisMouvement << " " << fmin << " " << fmax << " " << (float)vraisMouvement/50.0f << endl;
+            fmin = fmax = coutTest;
+            vraisMouvement = 0;
+        }
 	}
     meilleureConfig->nbIt = totalIt;
 	return(meilleureConfig);
@@ -133,7 +142,7 @@ int main()
 {
     int seed = time(NULL);
     srand(seed);
-    CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 23);
+    /*CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 23);
     CA_Solution* bestConfig = new CA_Solution(*ancienneConfig);
     CA_Solution* configRecuit = recuitSimule(ancienneConfig, 1);
     delete ancienneConfig;
@@ -149,21 +158,24 @@ int main()
     }
     cout << "Nombre de lignes : " << bestConfig->N << endl;
     delete bestConfig;
-    delete configRecuit;
+    delete configRecuit;*/
 
-    double temp[] = {1.6, 0.8, 0.4, 0.2, 0.1};
+    double temp[] = {1.6, 0.8, 0.4, 0.2, 0.1, 0.05, 0.025};
     ofstream fichier("resultsParam");
-
+    CA_Solution *ancienneConfig, *configRecuit;
     if(fichier)
     {
-        for(indexTemp = 0; indexTemp<sizeof(temp); indexTemp++)
+        for(int indexTemp = 0; indexTemp<sizeof(temp)/sizeof(double); indexTemp++)
         {
             fichier << "temp seed " << temp[indexTemp] << " " << seed << endl;
             fichier << "trial mov fmin fmax acc" << endl;
+            ancienneConfig = configurationAleatoire(3, 20, 23);
             configRecuit = recuitSimule(ancienneConfig, temp[indexTemp], 1, &fichier);
+            delete ancienneConfig;
         }
         fichier.close();
     }
     else {
         cerr << "Impossible d'ouvrir le fichier !" << endl; }
+    delete configRecuit;
 }
