@@ -9,6 +9,7 @@
 using namespace std;
 
 #include "CA_Solution.h"
+#include "Mouvement.h"
 
 
 CA_Solution* lireFichierSolution(const char* chemin)
@@ -51,28 +52,31 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 
 CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit) {
 	int nombreEssais = 100; // Condition d'arrêt simpliste, à modifier par la suite
-	int coeff = 0.5; // A changer également par la suite lorsque le schéma de refroidissement sera clairement établi
-
-	int T = tempInit;
+    int coeff = 0.99; // A changer également par la suite lorsque le schéma de refroidissement sera clairement établi
+    Mouvement mouvementActuel;
+    double T = tempInit;
 
 	CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
-	CA_Solution* configActuelle = configTestee; // Configuration S dans laquelle on se trouve
-	CA_Solution* meilleureConfig = configActuelle; // Meilleures des configurations testées jusqu'alors
+    //CA_Solution* configActuelle = new CA_Solution(*configInit); // Configuration S dans laquelle on se trouve
+    CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
 
 	int coutMeilleure = meilleureConfig->verifierSolution();
 
 	for(int ess=0; ess<nombreEssais; ess++) {
 		// On génère un voisin aléatoire de S
-		configTestee->mouvement();
-		int coutTest = configTestee->verifierSolution();
-		int coutActuelle = configActuelle->verifierSolution();
+        mouvementActuel = configTestee->mouvement();
+        int coutTest = configTestee->verifierSolution(mouvementActuel);
+        int coutActuelle = configTestee->verifierSolution();
 		int delta = coutTest - coutActuelle;
 
 		// On teste le critère de Métropolis
 		bool metropolis;
-		if(delta <= 0) {
+        if(delta <= 0)
+        {
 			metropolis = true;
-		} else {
+        }
+        else
+        {
 			double prob = exp(-delta/T);
 			int seuilTirage = 100*prob;
 			int numTire = rand()%100;
@@ -80,10 +84,13 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit) {
 		}
 
 		// Application des conséquences
-		if(metropolis) {
-			configActuelle = configTestee; // Déplacement entériné
-			if(coutTest < coutMeilleure) { // Mise à jour de la meilleure configuration (pas forcément S' si on a tiré au sort en faveur de la dégradation)
-				meilleureConfig = configTestee;
+        if(metropolis)
+        {
+            configTestee->appliquerMouvement(mouvementActuel); // Déplacement entériné
+            if(coutTest < coutMeilleure)
+            { // Mise à jour de la meilleure configuration (pas forcément S' si on a tiré au sort en faveur de la dégradation)
+                delete meilleureConfig;
+                meilleureConfig = new CA_Solution(*configTestee);
 				coutMeilleure = coutTest;
 			}
 		}
@@ -97,5 +104,13 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit) {
 
 int main()
 {
+    CA_Solution* configInit = configurationAleatoire(3, 4, 20);
+    CA_Solution* configRecuit = recuitSimule(configInit, 1);
+    while(configRecuit->verifierSolution() == 0)
+    {
 
+    }
+    cout << configRecuit->verifierSolution() << endl;
+    delete configInit;
+    delete configRecuit;
 }

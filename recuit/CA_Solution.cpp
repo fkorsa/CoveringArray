@@ -9,6 +9,13 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 	N = solution.size()/k;
 }
 
+CA_Solution::CA_Solution(const CA_Solution& sol)
+{
+    v = sol.v;
+    k = sol.k;
+    solution = sol.solution;
+    N = sol.N;
+}
 
 void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à partir d'une solution
 
@@ -35,7 +42,8 @@ void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à part
 		cerr << "Impossible d'ouvrir le fichier !" << endl; }
 }
 
-int CA_Solution::verifierSolution() { // vérifie si une solution est valide sachant les v,k,N,sol et renvoie le nombre d'erreurs
+int CA_Solution::verifierSolution()
+{ // vérifie si une solution est valide sachant les v,k,N,sol et renvoie le nombre d'erreurs
 
 	// Génère toutes les contraintes élémentaires
 	int nbContraintes((k*(k-1)*v*v)/2);
@@ -72,26 +80,40 @@ int CA_Solution::verifierSolution() { // vérifie si une solution est valide sach
 	}
 
 	int erreurs = (nbContraintes - contraintesSatisfaites);
-	if(erreurs == 0) {
-		cout << "Solution valable." << endl;} else {
-			cout << "Solution erronée. Il reste " << erreurs << " contraintes non satisfaites." << endl;
-		}
 
-		return(erreurs);
+    return(erreurs);
 } // Fin fonction vérification
 
+int CA_Solution::verifierSolution(Mouvement mv)
+{
+    int erreurs = 0;
+    int ancienSymbole = solution[k*mv.mLigne+mv.mCol];
+    appliquerMouvement(mv);
+    erreurs = verifierSolution();
+    mv.mSymbole = ancienSymbole;
+    appliquerMouvement(mv);
+    return erreurs;
+}
 
-void CA_Solution::mouvement() { // effectue un mouvement aléatoire dans une configuration donnée
+Mouvement CA_Solution::mouvement() { // effectue un mouvement aléatoire dans une configuration donnée
 	// Tirage au sort d'une colonne et d'une ligne
-	int c = rand()%k;
-	int l = rand()%N;
+    Mouvement mv;
+    mv.mCol = rand()%k;
+    mv.mLigne = rand()%N;
 
 	// Tirage au sort d'un nouveau symbole
-	int symboleActuel = solution[k*l+c];
+    int symboleActuel = solution[k*mv.mLigne+mv.mCol];
 	int nouveauSymbole = symboleActuel;
 	while(nouveauSymbole == symboleActuel) {
 		nouveauSymbole = rand()%v;
 	}
 	
-	solution[k*l+c] = nouveauSymbole;
+    mv.mSymbole = nouveauSymbole;
+
+    return mv;
+}
+
+void CA_Solution::appliquerMouvement(Mouvement mv)
+{
+    solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
 }
