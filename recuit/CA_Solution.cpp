@@ -7,14 +7,7 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 	k = col;
 	solution = resultat;
 	N = solution.size()/k;
-}
-
-CA_Solution::CA_Solution(const CA_Solution& sol)
-{
-    v = sol.v;
-    k = sol.k;
-    solution = sol.solution;
-    N = sol.N;
+    nbIt = 0;
 }
 
 void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à partir d'une solution
@@ -121,4 +114,9 @@ Mouvement CA_Solution::mouvement() { // effectue un mouvement aléatoire dans une
 void CA_Solution::appliquerMouvement(Mouvement mv)
 {
     solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
+}
+
+void CA_Solution::enleverLigne()
+{
+    solution.resize(k*(--N));
 }

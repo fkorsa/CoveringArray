@@ -15,11 +15,11 @@ class CA_Solution
 {
 public:
 	CA_Solution(int val, int col, vector<int> resultat);
-    CA_Solution(const CA_Solution& sol);
 
     void ecrireFichier(string chemin);
     int verifierSolution();
     int verifierSolution(Mouvement mv);
+    void enleverLigne();
     Mouvement mouvement();
     void appliquerMouvement(Mouvement mv);
 
@@ -27,6 +27,7 @@ public:
 	int k;
 	int N;
 	vector<int> solution;
+    int nbIt;
 };
 
 #endif //CA_SOLUTION_H
