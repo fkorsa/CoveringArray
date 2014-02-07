@@ -51,7 +51,7 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 
 
 CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit) {
-	int nombreEssais = 100; // Condition d'arrêt simpliste, à modifier par la suite
+    int nombreEssais = 10000; // Condition d'arrêt simpliste, à modifier par la suite
     int coeff = 0.99; // A changer également par la suite lorsque le schéma de refroidissement sera clairement établi
     Mouvement mouvementActuel;
     double T = tempInit;
@@ -104,7 +104,7 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit) {
 
 int main()
 {
-    CA_Solution* configInit = configurationAleatoire(3, 4, 20);
+    CA_Solution* configInit = configurationAleatoire(3, 20, 21);
     CA_Solution* configRecuit = recuitSimule(configInit, 1);
     while(configRecuit->verifierSolution() == 0)
     {

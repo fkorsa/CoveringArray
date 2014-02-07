@@ -80,6 +80,11 @@ int CA_Solution::verifierSolution()
 	}
 
 	int erreurs = (nbContraintes - contraintesSatisfaites);
+//    if(erreurs == 0) {
+//        cout << "Solution valable." << endl;}
+//    else {
+//        cout << "Solution erronée. Il reste " << erreurs << " contraintes non satisfaites." << endl;
+//    }
 
     return(erreurs);
 } // Fin fonction vérification
