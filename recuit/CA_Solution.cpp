@@ -10,6 +10,8 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
     nbIt = 0;
     // Génère toutes les contraintes élémentaires
     nbContraintes = (k*(k-1)*v*v)/2;
+    erreurs = -1;
+    erreursDernierMv = -1;
 
     contraintes = new bool***[k];
     for(int i1=0; i1<k; i1++) {
@@ -40,6 +42,8 @@ CA_Solution::CA_Solution(const CA_Solution& sol)
     solution = sol.solution;
     N = sol.N;
     nbIt = sol.nbIt;
+    erreurs = sol.erreurs;
+    erreursDernierMv = sol.erreursDernierMv;
     nbContraintes = sol.nbContraintes;
     contraintes = new bool***[k];
     for(int i1=0; i1<k; i1++) {

@@ -51,7 +51,7 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 
 
 CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofstream* fichier) {
-    int nombreEssais = 100000; // Condition d'arrêt
+    int nombreEssais = 1000000; // Condition d'arrêt
     Mouvement mouvementActuel;
     ofstream& fichierLocal = *fichier;
     double T = tempInit;
@@ -136,7 +136,7 @@ int main()
 {
     int seed = time(NULL);
     srand(seed);
-    CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 18);
+    CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 21);
     CA_Solution* bestConfig = new CA_Solution(*ancienneConfig);
     CA_Solution* configRecuit = recuitSimule(ancienneConfig, 0.5, 0.99, NULL);
     delete ancienneConfig;
@@ -151,6 +151,7 @@ int main()
         delete ancienneConfig;
     }
     cout << "Nombre de lignes : " << bestConfig->N << " Nombre d'erreurs : " << bestConfig->erreurs << endl;
+    cout << "sol : " << bestConfig->verifierSolution() << endl;
     delete bestConfig;
     delete configRecuit;
 
