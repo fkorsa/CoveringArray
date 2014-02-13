@@ -15,6 +15,7 @@ class CA_Solution
 {
 public:
 	CA_Solution(int val, int col, vector<int> resultat);
+    ~CA_Solution();
 
     void ecrireFichier(string chemin);
     int verifierSolution();
@@ -28,6 +29,9 @@ public:
 	int N;
 	vector<int> solution;
     int nbIt;
+    int nbContraintes;
+    int erreurs;
+    bool**** contraintes;
 };
 
 #endif //CA_SOLUTION_H

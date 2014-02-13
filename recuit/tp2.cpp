@@ -5,7 +5,6 @@
 #include <ctime>
 #include <cstdlib>
 #include <math.h>
-#include <unistd.h>
 
 using namespace std;
 
@@ -52,26 +51,26 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 
 
 CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofstream* fichier) {
-    int nombreEssais = 2000; // Condition d'arrÍt
+    int nombreEssais = 100000; // Condition d'arr√™t
     Mouvement mouvementActuel;
     ofstream& fichierLocal = *fichier;
     double T = tempInit;
-    int sleepCpt = 0, itCpt = 0, statiqueCpt = 0, totalIt = 0;
+    int itCpt = 0, statiqueCpt = 0, totalIt = 0;
     int vraisMouvement = 0, fmin, fmax;
-	CA_Solution* configTestee = configInit; // Configuration S' suite ‡ un mouvement
-    CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testÈes jusqu'alors
+	CA_Solution* configTestee = configInit; // Configuration S' suite √† un mouvement
+    CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations test√©es jusqu'alors
 
 	int coutMeilleure = meilleureConfig->verifierSolution();
 
     while(statiqueCpt < nombreEssais)
     {
-		// On gÈnËre un voisin alÈatoire de S
+		// On g√©n√®re un voisin al√©atoire de S
         mouvementActuel = configTestee->mouvement();
         int coutTest = configTestee->verifierSolution(mouvementActuel);
         int coutActuelle = configTestee->verifierSolution();
 		int delta = coutTest - coutActuelle;
 
-		// On teste le critËre de MÈtropolis
+		// On teste le crit√®re de M√©tropolis
 		bool metropolis;
         if(delta <= 0)
         {
@@ -85,12 +84,12 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
 			metropolis = (numTire <= seuilTirage);
 		}
 
-		// Application des consÈquences
+		// Application des cons√©quences
         if(metropolis)
         {
-            configTestee->appliquerMouvement(mouvementActuel); // DÈplacement entÈrinÈ
+            configTestee->appliquerMouvement(mouvementActuel); // D√©placement ent√©rin√©
             if(coutTest < coutMeilleure)
-            { // Mise ‡ jour de la meilleure configuration (pas forcÈment S' si on a tirÈ au sort en faveur de la dÈgradation)
+            { // Mise √† jour de la meilleure configuration (pas forc√©ment S' si on a tir√© au sort en faveur de la d√©gradation)
                 delete meilleureConfig;
                 meilleureConfig = new CA_Solution(*configTestee);
 				coutMeilleure = coutTest;
@@ -100,16 +99,10 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
         }
         statiqueCpt++;
 
-        if(sleepCpt > 100)
-        {
-            usleep(100);
-            sleepCpt = 0;
-        }
-        sleepCpt++;
         if(itCpt > 100)
         {
             itCpt = 0;
-            // Refroidissement (‡ Èlaborer encore plus)
+            // Refroidissement (√† √©laborer encore plus)
             T*=coeff;
         }
         itCpt++;
@@ -122,7 +115,7 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
         {
             fmax = coutTest;
         }
-        if(fichierLocal && totalIt%50 == 0)
+        if(fichier && totalIt%50 == 0)
         {
             fichierLocal << totalIt << " " << vraisMouvement << " " << fmin << " " << fmax << " " << (float)vraisMouvement/50.0f << endl;
             fmin = fmax = coutTest;
@@ -142,9 +135,9 @@ int main()
 {
     int seed = time(NULL);
     srand(seed);
-    /*CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 23);
+    CA_Solution* ancienneConfig = configurationAleatoire(3, 20, 18);
     CA_Solution* bestConfig = new CA_Solution(*ancienneConfig);
-    CA_Solution* configRecuit = recuitSimule(ancienneConfig, 1);
+    CA_Solution* configRecuit = recuitSimule(ancienneConfig, 0.5, 0.99, NULL);
     delete ancienneConfig;
     while(configRecuit->verifierSolution() == 0)
     {
@@ -152,15 +145,15 @@ int main()
         bestConfig = new CA_Solution(*configRecuit);
         configRecuit->enleverLigne();
         ancienneConfig = configRecuit;
-        configRecuit = recuitSimule(configRecuit, 1);
+        configRecuit = recuitSimule(configRecuit, 0.5, 0.99, NULL);
         cout << "Nombre d'iterations pour cette simulation : " << configRecuit->nbIt << endl;
         delete ancienneConfig;
     }
-    cout << "Nombre de lignes : " << bestConfig->N << endl;
+    cout << "Nombre de lignes : " << bestConfig->N << " Nombre d'erreurs : " << bestConfig->verifierSolution() << endl;
     delete bestConfig;
-    delete configRecuit;*/
+    delete configRecuit;
 
-    double temp[] = {1.6, 0.8, 0.4, 0.2, 0.1, 0.05, 0.025};
+    /*double temp[] = {1.6, 0.8, 0.4, 0.2, 0.1, 0.05, 0.025};
     ofstream fichier("resultsParam");
     CA_Solution *ancienneConfig, *configRecuit;
     if(fichier)
@@ -177,5 +170,5 @@ int main()
     }
     else {
         cerr << "Impossible d'ouvrir le fichier !" << endl; }
-    delete configRecuit;
+    delete configRecuit;*/
 }
