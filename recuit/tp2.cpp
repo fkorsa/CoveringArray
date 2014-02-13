@@ -56,18 +56,19 @@ CA_Solution* recuitSimule(CA_Solution* configInit, int tempInit, int coeff, ofst
     ofstream& fichierLocal = *fichier;
     double T = tempInit;
     int itCpt = 0, statiqueCpt = 0, totalIt = 0;
-    int vraisMouvement = 0, fmin, fmax;
+    int vraisMouvement = 0, fmin, fmax, coutTest, coutActuelle;
 	CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
 
-	int coutMeilleure = meilleureConfig->verifierSolution();
+    int coutMeilleure = configInit->verifierSolution();
 
     while(statiqueCpt < nombreEssais)
     {
 		// On génère un voisin aléatoire de S
         mouvementActuel = configTestee->mouvement();
-        int coutTest = configTestee->verifierSolution(mouvementActuel);
-        int coutActuelle = configTestee->verifierSolution();
+        coutActuelle = configTestee->erreurs;
+        coutTest = configTestee->verifierSolution(mouvementActuel);
+
 		int delta = coutTest - coutActuelle;
 
 		// On teste le critère de Métropolis
@@ -139,7 +140,7 @@ int main()
     CA_Solution* bestConfig = new CA_Solution(*ancienneConfig);
     CA_Solution* configRecuit = recuitSimule(ancienneConfig, 0.5, 0.99, NULL);
     delete ancienneConfig;
-    while(configRecuit->verifierSolution() == 0)
+    while(configRecuit->erreurs == 0)
     {
         delete bestConfig;
         bestConfig = new CA_Solution(*configRecuit);
@@ -149,7 +150,7 @@ int main()
         cout << "Nombre d'iterations pour cette simulation : " << configRecuit->nbIt << endl;
         delete ancienneConfig;
     }
-    cout << "Nombre de lignes : " << bestConfig->N << " Nombre d'erreurs : " << bestConfig->verifierSolution() << endl;
+    cout << "Nombre de lignes : " << bestConfig->N << " Nombre d'erreurs : " << bestConfig->erreurs << endl;
     delete bestConfig;
     delete configRecuit;
 

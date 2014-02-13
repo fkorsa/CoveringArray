@@ -15,12 +15,14 @@ class CA_Solution
 {
 public:
 	CA_Solution(int val, int col, vector<int> resultat);
+    CA_Solution(const CA_Solution& sol);
     ~CA_Solution();
 
     void ecrireFichier(string chemin);
     int verifierSolution();
     int verifierSolution(Mouvement mv);
     void enleverLigne();
+    int compterErreurs();
     Mouvement mouvement();
     void appliquerMouvement(Mouvement mv);
 
@@ -30,8 +32,9 @@ public:
 	vector<int> solution;
     int nbIt;
     int nbContraintes;
-    int erreurs;
+    int erreurs, erreursDernierMv;
     bool**** contraintes;
+    bool **copieContraintesAncien, **copieContraintesNouveau;
 };
 
 #endif //CA_SOLUTION_H

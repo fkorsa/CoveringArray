@@ -12,7 +12,7 @@ using namespace std;
 class Mouvement
 {
 public:
-    Mouvement(int val, int col, int symbole, int ancienSymbole){mLigne=val;mCol=col;mSymbole=symbole;mAncienSymbole=ancienSymbole;}
+    Mouvement(int ligne, int col, int symbole, int ancienSymbole){mLigne=ligne;mCol=col;mSymbole=symbole;mAncienSymbole=ancienSymbole;}
     Mouvement(){mLigne=0;mCol=0;mSymbole=0;mAncienSymbole=0;}
     //Mouvement(const Mouvement& mv){mLigne=mv.mLigne;mCol=mv.mCol;mSymbole=mv.mSymbole;}
 
