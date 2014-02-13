@@ -30,7 +30,7 @@ public:
 	int k;
 	int N;
 	vector<int> solution;
-    int nbIt;
+    int nbIt, nbMvt;
     int nbContraintes;
     int erreurs, erreursDernierMv;
     bool**** contraintes;

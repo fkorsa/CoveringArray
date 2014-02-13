@@ -8,11 +8,13 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 	solution = resultat;
 	N = solution.size()/k;
     nbIt = 0;
+    nbMvt = 0;
     // Génère toutes les contraintes élémentaires
     nbContraintes = (k*(k-1)*v*v)/2;
     erreurs = -1;
     erreursDernierMv = -1;
 
+    // Allocation des ressources pour les contraintes
     contraintes = new bool***[k];
     for(int i1=0; i1<k; i1++) {
         contraintes[i1] = new bool**[k];
@@ -26,6 +28,8 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
             }
         }
     }
+
+    // Allocation des ressources pour les contraintes temporaires
     copieContraintesAncien = new bool*[k];
     copieContraintesNouveau = new bool*[k];
     for(int i1=0; i1<k; i1++)
@@ -37,14 +41,18 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 
 CA_Solution::CA_Solution(const CA_Solution& sol)
 {
+    // Copie membre a membre
     v = sol.v;
     k = sol.k;
     solution = sol.solution;
     N = sol.N;
     nbIt = sol.nbIt;
+    nbMvt = sol.nbMvt;
     erreurs = sol.erreurs;
     erreursDernierMv = sol.erreursDernierMv;
     nbContraintes = sol.nbContraintes;
+
+    // Copie des contraintes
     contraintes = new bool***[k];
     for(int i1=0; i1<k; i1++) {
         contraintes[i1] = new bool**[k];
@@ -53,7 +61,7 @@ CA_Solution::CA_Solution(const CA_Solution& sol)
             for(int i3=0; i3<v; i3++) {
                 contraintes[i1][i2][i3] = new bool[v];
                 for(int i4=0; i4<v; i4++) {
-                    contraintes[i1][i2][i3][i4] = false;
+                    contraintes[i1][i2][i3][i4] = sol.contraintes[i1][i2][i3][i4];
                 }
             }
         }
@@ -69,6 +77,7 @@ CA_Solution::CA_Solution(const CA_Solution& sol)
 
 CA_Solution::~CA_Solution()
 {
+    // Liberation des ressources
     for(int i1=0; i1<k; i1++)
     {
         delete[] copieContraintesAncien[i1];
@@ -152,9 +161,18 @@ int CA_Solution::verifierSolution()
     return(erreurs);
 } // Fin fonction vérification
 
+// Compte le nombre d'erreurs de la matrice resultant du mouvement mv
+// Pour etre efficace, on ne recalcule pas toutes les contraintes. On regarde d'abord
+// le symbole qui disparait, puis on enleve toutes les contraintes associees avec les autres colonnes de
+// la ligne. Ensuite, on parcourt la colonne du mouvement de haut en bas, en regardant si le symbole dans la ligne courante
+// est celui qu'on vient d'enlever : si c'est le cas, on retablit les contraintes associees dans la ligne.
+// Enfin, on valide les contraintes induites par le rajout du nouveau symbole dans la case du mouvement.
 int CA_Solution::verifierSolution(Mouvement mv)
 {
+    // Copie du nombre d'erreurs
     erreursDernierMv = erreurs;
+
+    // Copie de la partie du tableau de contraintes concernee
     for(int i1=0; i1<k; i1++)
     {
         for(int i2=0; i2<v; i2++)
@@ -171,6 +189,8 @@ int CA_Solution::verifierSolution(Mouvement mv)
             }
         }
     }
+
+    // Suppression des contraintes entre l'ancien symbole et les autres symboles de la ligne
     for(int i1=0; i1<k; i1++)
     {
         if(copieContraintesAncien[i1][solution[mv.mLigne*k+i1]] && i1 != mv.mCol)
@@ -180,6 +200,7 @@ int CA_Solution::verifierSolution(Mouvement mv)
         }
     }
 
+    // Retablissement des contraintes enlevees de maniere superflue
     for(int l=0; l<N; l++)
     {
         if(l != mv.mLigne && solution[l*k+mv.mCol] == mv.mAncienSymbole)
@@ -194,6 +215,8 @@ int CA_Solution::verifierSolution(Mouvement mv)
             }
         }
     }
+
+    // Validation des contraintes remplies par l'ajout du nouveau symbole
     for(int i1=0; i1<k; i1++)
     {
         if(!copieContraintesNouveau[i1][solution[mv.mLigne*k+i1]] && i1 != mv.mCol)
