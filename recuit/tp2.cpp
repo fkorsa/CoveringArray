@@ -12,7 +12,7 @@ using namespace std;
 #include "CA_Solution.h"
 #include "Mouvement.h"
 
-
+// Lire une matrice a partir d'un fichier
 CA_Solution* lireFichierSolution(const char* chemin)
 {
 	ifstream infile(chemin);
@@ -36,7 +36,7 @@ CA_Solution* lireFichierSolution(const char* chemin)
 	return ca_sol;
 }
 
-
+// Generer une matrice aleatoirement
 CA_Solution* configurationAleatoire(int v, int k, int N) {
 	vector<int> matrice(N*k);
 
@@ -51,6 +51,12 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 }
 
 
+// Algorithme du recuit simule
+// configInit : matrice de base, de laquelle on part (toujours generee aleatoirement)
+// tempInit : temperature initiale
+// coeff : coefficient de reduction pour la decroissance geometrique
+// fichier : pointeur vers un fichier ouvert en ecriture, pour enregistrer les details de la simulation
+// nombreEssais : nombre d'iterations au bout de laquelle on s'arrete, si on n'a toujours pas ameliore la solution
 CA_Solution* recuitSimule(CA_Solution* configInit, double tempInit, double coeff, ofstream* fichier, int nombreEssais) {
     Mouvement mouvementActuel;
     ofstream& fichierLocal = *fichier;
@@ -79,6 +85,7 @@ CA_Solution* recuitSimule(CA_Solution* configInit, double tempInit, double coeff
         {
 			metropolis = true;
         }
+        // si T=0, on ne prend pas de mouvement qui degrade la solution
         else if(T != 0)
         {
             double prob;
@@ -105,10 +112,10 @@ CA_Solution* recuitSimule(CA_Solution* configInit, double tempInit, double coeff
         }
         statiqueCpt++;
 
+        // Refroidissement par paliers
         if(itCpt > 1000)
         {
             itCpt = 0;
-            // Refroidissement (à élaborer encore plus)
             T*=coeff;
         }
         totalIt++;
@@ -120,6 +127,7 @@ CA_Solution* recuitSimule(CA_Solution* configInit, double tempInit, double coeff
         {
             fmax = coutTest;
         }
+        // Enregistrement des parametres de la simulation
         if(fichier && totalIt%50 == 0)
         {
             fichierLocal << totalIt << " " << vraisMouvements << " " << fmin << " " << fmax << " " << (float)vraisMouvements/50.0f << endl;
@@ -132,6 +140,8 @@ CA_Solution* recuitSimule(CA_Solution* configInit, double tempInit, double coeff
 	return(meilleureConfig);
 }
 
+// Fonction appelant le recuit simule a temperature constante pour differentes valeurs de temperature
+// Enregistre les donnees dans le fichier "resultsParam"
 void testerParametres(int seed)
 {
     double temp[] = {1.6, 0.8, 0.4, 0.2, 0.1, 0.05, 0.025};
@@ -154,6 +164,9 @@ void testerParametres(int seed)
     delete configRecuit;
 }
 
+// Part d'une matrice aleatoire avec un nombre de lignes egal a nbLignesDebut,
+// puis reduit la taille de la matrice en supprimant la derniere ligne si le recuit simule
+// a trouve une matrice de cette taille qui est valide.
 int trouverMeilleure(int nbSymboles, int nbColonnes, int nbLignesDebut, double tempInit, double alpha)
 {
     int nbLignes;
@@ -178,6 +191,7 @@ int trouverMeilleure(int nbSymboles, int nbColonnes, int nbLignesDebut, double t
     return nbLignes;
 }
 
+// Lance le recuit simule pour certaines valeurs des parametres
 CA_Solution* executerRecuit(int nbSymboles, int nbColonnes, int nbLignes, double tempInit, double alpha)
 {
     CA_Solution* ancienneConfig = configurationAleatoire(nbSymboles, nbColonnes, nbLignes);
@@ -186,6 +200,7 @@ CA_Solution* executerRecuit(int nbSymboles, int nbColonnes, int nbLignes, double
     return configRecuit;
 }
 
+// Genere les resultats requis pour le rapport : lance le recuit 10 fois par jeu de donnees.
 void genererResultats()
 {
     ifstream infile("inputData");
@@ -217,7 +232,8 @@ void genererResultats()
             for(int i = 0; i < 10; i++)
             {
                 start = chrono::system_clock::now();
-                solution = executerRecuit(nbSymboles, nbColonnes, nbLignes, 0.0, 0.5);
+                // Mettre tempInit a 0 pour la descente, a 0.1 pour le recuit
+                solution = executerRecuit(nbSymboles, nbColonnes, nbLignes, 0.1, 0.5);
                 realTime = chrono::system_clock::now()-start;
                 temps = 1000*realTime.count();
                 if(i == 0)
@@ -290,6 +306,9 @@ void genererResultats()
     }
 }
 
+// Pour chercher un optimum local non global, on applique la descente et le recuit sur les memes
+// parametres. Si le recuit donne une meilleure solution, la matrice consideree est un optimum local
+// mais pas global.
 void rechercherOptimum()
 {
     bool trouve = false;
@@ -325,8 +344,15 @@ int main()
 {
     int seed = time(NULL);
     srand(seed);
-    //testerParametres(seed);
-    genererResultats();
-    //cout << "Meilleure : " << trouverMeilleure(8, 15, 116, 0.1, 0.5) << endl;
 
+    // Plusieurs fonctionnements possibles : decommenter la ligne qui provoque le fonctionnement souhaite.
+
+    // Pour effectuer des tests afin de determiner les meilleurs parametres de la simulation
+    //testerParametres(seed);
+
+    // Pour generer tous les resultats avec les jeux de donnees indiques dans le sujet
+    genererResultats();
+
+    // Pour trouver le plus petit nombre de lignes possible pour une configuration (k, v) donnee
+    //cout << "Meilleure : " << trouverMeilleure(8, 15, 116, 0.1, 0.5) << endl;
 }

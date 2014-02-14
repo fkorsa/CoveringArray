@@ -229,7 +229,9 @@ int CA_Solution::verifierSolution(Mouvement mv)
     return erreursDernierMv;
 }
 
-Mouvement CA_Solution::mouvement() { // effectue un mouvement aléatoire dans une configuration donnée
+// effectue un mouvement aléatoire dans une configuration donnée
+Mouvement CA_Solution::mouvement()
+{
 	// Tirage au sort d'une colonne et d'une ligne
     Mouvement mv;
     mv.mCol = rand()%k;
@@ -239,7 +241,8 @@ Mouvement CA_Solution::mouvement() { // effectue un mouvement aléatoire dans un
     int symboleActuel = solution[k*mv.mLigne+mv.mCol];
     mv.mAncienSymbole = symboleActuel;
 	int nouveauSymbole = symboleActuel;
-	while(nouveauSymbole == symboleActuel) {
+    while(nouveauSymbole == symboleActuel)
+    {
 		nouveauSymbole = rand()%v;
 	}
 	
@@ -248,6 +251,9 @@ Mouvement CA_Solution::mouvement() { // effectue un mouvement aléatoire dans un
     return mv;
 }
 
+// Effectue le mouvement mv : remplace le symbole dans la matrice et recalcule les erreurs et les contraintes.
+// Lorsque cette fonction est appelee, verifierSolution(mv) a ete appelee avant. Nous pouvons donc nous contenter
+// de copier les valeurs generees par verifierSolution.
 void CA_Solution::appliquerMouvement(Mouvement mv)
 {
     solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
@@ -271,30 +277,8 @@ void CA_Solution::appliquerMouvement(Mouvement mv)
     erreurs = erreursDernierMv;
 }
 
+// Supprime la derniere ligne de la matrice
 void CA_Solution::enleverLigne()
 {
     solution.resize(k*(--N));
-}
-
-// A des fins de Debug
-int CA_Solution::compterErreurs()
-{
-    int contraintesSatisfaites = 0;
-    for(int i1=0; i1<k; i1++)
-    {
-        for(int i2=0; i2<k; i2++)
-        {
-            for(int i3=0; i3<v; i3++)
-            {
-                for(int i4=0; i4<v; i4++)
-                {
-                    if(contraintes[i1][i2][i3][i4])
-                    {
-                        contraintesSatisfaites++;
-                    }
-                }
-            }
-        }
-    }
-    return (nbContraintes - contraintesSatisfaites);
 }

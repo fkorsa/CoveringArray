@@ -22,7 +22,6 @@ public:
     int verifierSolution();
     int verifierSolution(Mouvement mv);
     void enleverLigne();
-    int compterErreurs();
     Mouvement mouvement();
     void appliquerMouvement(Mouvement mv);
 
