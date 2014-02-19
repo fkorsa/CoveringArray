@@ -22,7 +22,9 @@ public:
     int verifierSolution();
     int verifierSolution(Mouvement mv);
     void enleverLigne();
-    Mouvement mouvement();
+    Mouvement mouvementSuivant();
+    void reinitialiserMouvementCourant();
+    Mouvement mouvementCourant(){return mvtCourant;}
     void appliquerMouvement(Mouvement mv);
 
 	int v;
@@ -34,6 +36,7 @@ public:
     int erreurs, erreursDernierMv;
     bool**** contraintes;
     bool **copieContraintesAncien, **copieContraintesNouveau;
+    Mouvement mvtCourant;
 };
 
 #endif //CA_SOLUTION_H

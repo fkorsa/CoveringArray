@@ -37,6 +37,16 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
         copieContraintesAncien[i1] = new bool[v];
         copieContraintesNouveau[i1] = new bool[v];
     }
+    mvtCourant.mAncienSymbole = solution[0];
+    if(solution[0] != 0)
+    {
+        mvtCourant.mSymbole = 0;
+    }
+    else
+    {
+        mvtCourant.mSymbole = 1;
+    }
+
 }
 
 CA_Solution::CA_Solution(const CA_Solution& sol)
@@ -229,35 +239,45 @@ int CA_Solution::verifierSolution(Mouvement mv)
     return erreursDernierMv;
 }
 
-// effectue un mouvement aléatoire dans une configuration donnée
-Mouvement CA_Solution::mouvement()
+// effectue le mouvement suivant dans la configuration courante
+Mouvement CA_Solution::mouvementSuivant()
 {
-	// Tirage au sort d'une colonne et d'une ligne
-    Mouvement mv;
-    mv.mCol = rand()%k;
-    mv.mLigne = rand()%N;
-
-	// Tirage au sort d'un nouveau symbole
-    int symboleActuel = solution[k*mv.mLigne+mv.mCol];
-    mv.mAncienSymbole = symboleActuel;
-	int nouveauSymbole = symboleActuel;
-    while(nouveauSymbole == symboleActuel)
+    Mouvement mv = mvtCourant;
+    bool estFinal = false;
+    // Mouvement suivant dans le parcours de tous les mouvements possibles
+    mvtCourant.incrementer(k, v, N);
+    estFinal |= mvtCourant.estFinal;
+    while(mvtCourant.mSymbole == solution[k*mvtCourant.mLigne+mvtCourant.mCol])
     {
-		nouveauSymbole = rand()%v;
-	}
-	
-    mv.mSymbole = nouveauSymbole;
-
+        mvtCourant.incrementer(k, v, N);
+        estFinal |= mvtCourant.estFinal;
+    }
+    mvtCourant.mAncienSymbole = solution[k*mvtCourant.mLigne+mvtCourant.mCol];
+    mvtCourant.estFinal = estFinal;
     return mv;
 }
 
+void CA_Solution::reinitialiserMouvementCourant()
+{
+    mvtCourant.estFinal = false;
+    mvtCourant.mLigne = 0;
+    mvtCourant.mCol = 0;
+    mvtCourant.mSymbole = 0;
+    mvtCourant.mAncienSymbole = solution[0];
+    while(mvtCourant.mSymbole == solution[k*mvtCourant.mLigne+mvtCourant.mCol])
+    {
+        mvtCourant.incrementer(k, v, N);
+    }
+}
+
 // Effectue le mouvement mv : remplace le symbole dans la matrice et recalcule les erreurs et les contraintes.
-// Lorsque cette fonction est appelee, verifierSolution(mv) a ete appelee avant. Nous pouvons donc nous contenter
-// de copier les valeurs generees par verifierSolution.
+// Nous appelons verifierSolution(mv) dans le corps de cette fonction : nous pouvons donc nous contenter
+// de copier les valeurs des contraintes generees par verifierSolution.
 void CA_Solution::appliquerMouvement(Mouvement mv)
 {
     solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
 
+    verifierSolution(mv);
     for(int i1=0; i1<k; i1++)
     {
         for(int i2=0; i2<v; i2++)
