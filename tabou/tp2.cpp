@@ -95,6 +95,7 @@ CA_Solution* tabou(CA_Solution* configInit, int nombreEssais, ofstream *fichier,
         configTestee->reinitialiserMouvementCourant();
         mouvementActuel = configTestee->mouvementCourant();
         listeMeilleurs.clear();
+        // Parcours de tous les voisins et determination du meilleur, non tabou
         while(!mouvementActuel.estFinal)
         {
             // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
@@ -107,22 +108,29 @@ CA_Solution* tabou(CA_Solution* configInit, int nombreEssais, ofstream *fichier,
             premiereIteration = false;
             coutTest = configTestee->verifierSolution(mouvementActuel);
             delta = coutTest - coutActuelle;
+            // Critere tabou
             if((listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < totalIt
                 // Critere d'aspiration
                 || coutTest < coutMeilleure)
+                // si le mouvement est meilleur que les precedents
                 && (!minDefini || delta <= deltaMin))
             {
+                // Si on trouve un mouvement strictement meilleur, on vide la liste des meilleurs mouvements
                 if(!minDefini || delta < deltaMin)
                 {
                     listeMeilleurs.clear();
                 }
+                // Enregistrement de cette configuration en tant que meilleure config
                 deltaMin = delta;
                 coutMin = coutTest;
                 meilleurMouvement = mouvementActuel;
                 minDefini = true;
+                // Ajout de ce mouvement dans la liste des meilleurs
                 listeMeilleurs.push_back(meilleurMouvement);
             }
         }
+
+        // On departage les mouvements ex aequo aleatoirement, selon une distribution uniforme
         double tailleListe = listeMeilleurs.size();
         if(tailleListe > 1)
         {
@@ -142,9 +150,10 @@ CA_Solution* tabou(CA_Solution* configInit, int nombreEssais, ofstream *fichier,
         if(minDefini)
         {
             configTestee->appliquerMouvement(meilleurMouvement); // Déplacement entériné
+            // L'ancien symbole est maintenant tabou
             listeTaboue[meilleurMouvement.mLigne][meilleurMouvement.mCol][meilleurMouvement.mAncienSymbole] = totalIt + longueurListe;
             if(coutMin < coutMeilleure)
-            { // Mise à jour de la meilleure configuration (pas forcément S' si on a tiré au sort en faveur de la dégradation)
+            { // Mise à jour de la meilleure configuration
                 delete meilleureConfig;
                 meilleureConfig = new CA_Solution(*configTestee);
                 coutMeilleure = coutMin;
@@ -172,6 +181,8 @@ CA_Solution* tabou(CA_Solution* configInit, int nombreEssais, ofstream *fichier,
 	return(meilleureConfig);
 }
 
+// Lit le fichier "inputData" pour executer 'nbExec' fois l'algorithme tabou, et relever des
+// statistiques dans le fichier "output"
 void genererResultats(int nbExec)
 {
     ifstream infile("inputData");
@@ -186,6 +197,7 @@ void genererResultats(int nbExec)
     if(outfile.is_open())
     {
         outfile << "NombreSymboles NombreColonnes NombreLignes CoutMin CoutMoyen CoutMax ItMin ItMoyen ItMax MvMin MvMoyen MvMax TempsMin TempsMoyen TempsMax" << endl;
+        // Pour chaque configuration dans le fichier "inputData"
         while (infile >> nbSymboles >> nbColonnes >> nbLignes >> longueurListe)
         {
             coutMoyen = 0;
@@ -203,6 +215,7 @@ void genererResultats(int nbExec)
             cout << nbSymboles << " "
                     << nbColonnes << " "
                     << nbLignes << " " << endl;
+            // On execute l'algorithme plusieurs fois
             for(int i = 0; i < nbExec; i++)
             {
                 CA_Solution* configInit = configurationAleatoire(nbSymboles, nbColonnes, nbLignes);
@@ -262,6 +275,7 @@ void genererResultats(int nbExec)
             tempsMoyen *= (8.6/5.4);
             tempsMin *= (8.6/5.4);
             tempsMax *= (8.6/5.4);
+            // On enregistre les donnees dans le fichier output
             outfile << nbSymboles << " "
                     << nbColonnes << " "
                     << nbLignes << " "
@@ -287,9 +301,11 @@ int main()
     int seed = time(NULL);
     srand(seed);
 
+    // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
     CA_Solution* configInit = configurationAleatoire(3, 20, 16);
     CA_Solution* configTabou = tabou(configInit, 1000, NULL, 30);
     cout << "Erreurs : " << configTabou->erreurs << " iterations : " << configTabou->nbIt << endl;
 
+    // Pour generer toutes les stats sur les differentes configs, decommenter cette section
     //genererResultats(1);
 }
