@@ -497,5 +497,5 @@ int main()
     delete configTabou;*/
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(10, false);
+    genererResultats(10, true);
 }
