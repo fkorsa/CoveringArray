@@ -51,7 +51,8 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 	return configuration;
 }
 
-/// TODO : ce n'est qu'un stub
+// Choix du meilleur voisin, avec diversification et liste taboue : la fonction de cout est perturbee avec les frequences
+// des symboles, pour qu'on se dirige vers des regions inexplorees de l'espace de recherche
 void choixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration,
                           bool*** presence, int ***dernierePresence, int ***frequence, int coutMeilleure)
 {
@@ -73,11 +74,15 @@ void choixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeill
         }
         premiereIteration = false;
         frequenceNouveau = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
+        // Ajustement de la frequence du nouveau symbole pour tenir compte de la presence eventuelle du symbole
+        // jusqu'ici
         if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole])
         {
             frequenceNouveau += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
         }
         frequenceAncien = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
+        // Ajustement de la frequence de l'ancien symbole pour tenir compte de sa presence eventuelle
+        // jusqu'ici
         if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole])
         {
             frequenceAncien += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
@@ -102,6 +107,8 @@ void choixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeill
     }
 }
 
+// Choix du meilleur voisin avec liste taboue. On enregistre la liste des meilleurs mouvement, qui seront departages
+// aleatoirement par la fonction appelante (qui est toujours la fonction tabou(...))
 void choixMouvement(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration, int coutMeilleure)
 {
     bool minDefini, premiereIteration;
@@ -161,13 +168,14 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now(), dateDebutPhase = dateDebut;
     chrono::duration<double> duree, dureePhase;
     double dureeMillisecondes;
-    //const double tempsMax = 60000*5.4/8.6;
-    const double tempsMax = 1200000;
+    const double tempsMax = 60000*5.4/8.6;
 
     // Variables pour la diversification
     bool ***presence;
     int ***dernierePresence;
     int ***frequence;
+
+    // Allocation de la memoire pour les memoires a long terme : presence, frequence et derniere presence des symboles
     if(diversification)
     {
         presence = new bool**[N];
@@ -238,6 +246,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     duree = chrono::system_clock::now()-dateDebut;
     dureeMillisecondes = 1000*duree.count();
 
+    // Critere d'arret : une minute de temps d'execution, ou bien une solution trouvee
     while((coutMeilleure > 0 || fichier) && dureeMillisecondes < tempsMax)
     {
         configTestee->reinitialiserMouvementCourant();
@@ -251,18 +260,16 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
         }
         else if(diversification && dureePhase.count() >= 9)
         {
+            // Parcours des voisins, avec une fonction de cout prenant en compte la frequence d'apparition des symboles
             choixDiversification(configTestee, &listeMeilleurs, listeTaboue, iteration, presence, dernierePresence, frequence, coutMeilleure);
-            /*if(iteration%100 == 0)
-            {
-                cout << "Diversification" << endl;
-            }*/
         }
         if(dureePhase.count() >= 10)
-        {
+        { // Fin de la phase de diversification
             dateDebutPhase = chrono::system_clock::now();
         }
 
         mv = listeMeilleurs.front();
+
         // On departage les mouvements ex aequo aleatoirement, selon une distribution uniforme
         double tailleListe = listeMeilleurs.size();
         if(tailleListe > 1)
@@ -285,6 +292,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
             configTestee->appliquerMouvement(mv); // Déplacement entériné
             // L'ancien symbole est maintenant tabou
             listeTaboue[mv.mLigne][mv.mCol][mv.mAncienSymbole] = iteration + longueurListe;
+            // Actualisation des memoires a long terme
             if(diversification)
             {
                 presence[mv.mLigne][mv.mCol][mv.mAncienSymbole] = false;
@@ -304,21 +312,25 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
 
         iteration++;
 
+        // Actualisation du temps passe
         duree = chrono::system_clock::now()-dateDebut;
         dureeMillisecondes = 1000*duree.count();
-        // Enregistrement des parametres de la simulation
+
         coutActuelle = configTestee->erreurs;
+        // Enregistrement de la progression du cout dans un fichier
         if(fichier && iteration%5 == 0)
         {
             fichierLocal << iteration << " " << coutActuelle << endl;
             cout << iteration << " " << coutActuelle << endl;
         }
+        // A des fins de debug, decommenter pour afficher la progression du cout
         /*if(iteration%100 == 0)
         {
             cout << iteration << " " << coutActuelle << " " << dureeMillisecondes << endl;
         }*/
 	}
 
+    // Liberation des ressources
     if(diversification)
     {
         for(int i1=0; i1<N; i1++)
@@ -364,7 +376,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     }
     delete[] listeTaboue;
 
-
+    // Enregistrement pour les statistiques
     meilleureConfig->nbIt = iteration;
     meilleureConfig->nbMvt = vraisMouvementsTotal;
 	return(meilleureConfig);
@@ -490,8 +502,11 @@ int main()
     int seed = time(NULL);
     srand(seed);
 
+    // Pour generer toutes les stats sur les differentes configs, decommenter cette section
+    genererResultats(10, true);
+
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
-    CA_Solution* configInit = configurationAleatoire(8, 15, 108);
+    /*CA_Solution* configInit = configurationAleatoire(8, 15, 108);
     ofstream outfile("output");
     if(outfile.is_open())
     {
@@ -499,9 +514,5 @@ int main()
         cout << "Erreurs : " << configTabou->erreurs << " iterations : " << configTabou->nbIt << endl;
         delete configTabou;
     }
-    delete configInit;
-
-
-    // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    //genererResultats(10, true);
+    delete configInit;*/
 }
