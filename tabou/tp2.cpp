@@ -161,7 +161,8 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now(), dateDebutPhase = dateDebut;
     chrono::duration<double> duree, dureePhase;
     double dureeMillisecondes;
-    const double tempsMax = 60000*5.4/8.6;
+    //const double tempsMax = 60000*5.4/8.6;
+    const double tempsMax = 1200000;
 
     // Variables pour la diversification
     bool ***presence;
@@ -307,7 +308,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
         dureeMillisecondes = 1000*duree.count();
         // Enregistrement des parametres de la simulation
         coutActuelle = configTestee->erreurs;
-        if(fichier && iteration%50 == 0)
+        if(fichier && iteration%5 == 0)
         {
             fichierLocal << iteration << " " << coutActuelle << endl;
             cout << iteration << " " << coutActuelle << endl;
@@ -490,12 +491,17 @@ int main()
     srand(seed);
 
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
-    /*CA_Solution* configInit = configurationAleatoire(3, 20, 16);
-    CA_Solution* configTabou = tabou(configInit, NULL, 20, true);
-    cout << "Erreurs : " << configTabou->erreurs << " iterations : " << configTabou->nbIt << endl;
+    CA_Solution* configInit = configurationAleatoire(8, 15, 108);
+    ofstream outfile("output");
+    if(outfile.is_open())
+    {
+        CA_Solution* configTabou = tabou(configInit, &outfile, 40, false);
+        cout << "Erreurs : " << configTabou->erreurs << " iterations : " << configTabou->nbIt << endl;
+        delete configTabou;
+    }
     delete configInit;
-    delete configTabou;*/
+
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(10, true);
+    //genererResultats(10, true);
 }
