@@ -51,118 +51,75 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 	return configuration;
 }
 
-// Choix du meilleur voisin, avec diversification et liste taboue : la fonction de cout est perturbee avec les frequences
-// des symboles, pour qu'on se dirige vers des regions inexplorees de l'espace de recherche
-void choixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration,
-                          bool*** presence, int ***dernierePresence, int ***frequence, int coutMeilleure)
+void calculerCouts(CA_Solution **population, int *couts, int taille)
 {
-    bool minDefini, premiereIteration;
-    int coutTest, coutMin, frequenceNouveau, frequenceAncien;
-    Mouvement mouvementActuel;
-
-    minDefini = false;
-    premiereIteration = true;
-    mouvementActuel = configTestee->mouvementCourant();
-    while(!mouvementActuel.estFinal)
+    int cnt, cout, left, right, pivot, i;
+    CA_Solution **populationCopy = new CA_Solution*[taille];
+    couts[0] = population[0]->verifierSolution();
+    populationCopy[0] = population[0];
+    // 1 3 4
+    for(cnt = 1; cnt < taille; cnt++)
     {
-        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
-        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
-        // des mouvements possibles.
-        if(!premiereIteration)
+        cout = population[cnt]->verifierSolution();
+        left = 0;
+        right = cnt - 1;
+        while(left != right)
         {
-            mouvementActuel = configTestee->mouvementSuivant();
-        }
-        premiereIteration = false;
-        frequenceNouveau = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
-        // Ajustement de la frequence du nouveau symbole pour tenir compte de la presence eventuelle du symbole
-        // jusqu'ici
-        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole])
-        {
-            frequenceNouveau += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
-        }
-        frequenceAncien = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
-        // Ajustement de la frequence de l'ancien symbole pour tenir compte de sa presence eventuelle
-        // jusqu'ici
-        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole])
-        {
-            frequenceAncien += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
-        }
-        coutTest = configTestee->verifierSolution(mouvementActuel) + frequenceNouveau - frequenceAncien;
-        // Critere tabou
-        if(listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
-            // si le mouvement est meilleur que les precedents
-            && (!minDefini || coutTest <= coutMin))
-        {
-            // Si on trouve un mouvement strictement meilleur, on vide la liste des meilleurs mouvements
-            if(!minDefini || coutTest < coutMin)
+            pivot = (left+right)/2;
+            if(cout > couts[pivot])
             {
-                listeMeilleurs->clear();
+                left = pivot + 1;
             }
-            // Enregistrement de cette configuration en tant que meilleure config
-            coutMin = coutTest;
-            minDefini = true;
-            // Ajout de ce mouvement dans la liste des meilleurs
-            listeMeilleurs->push_back(mouvementActuel);
-        }
-    }
-}
-
-// Choix du meilleur voisin avec liste taboue. On enregistre la liste des meilleurs mouvement, qui seront departages
-// aleatoirement par la fonction appelante (qui est toujours la fonction tabou(...))
-void choixMouvement(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration, int coutMeilleure)
-{
-    bool minDefini, premiereIteration;
-    int coutTest, coutActuelle, coutMin;
-    Mouvement mouvementActuel;
-
-    minDefini = false;
-    premiereIteration = true;
-    coutActuelle = configTestee->erreurs;
-    mouvementActuel = configTestee->mouvementCourant();
-    while(!mouvementActuel.estFinal)
-    {
-        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
-        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
-        // des mouvements possibles.
-        if(!premiereIteration)
-        {
-            mouvementActuel = configTestee->mouvementSuivant();
-        }
-        premiereIteration = false;
-        coutTest = configTestee->verifierSolution(mouvementActuel);
-        // Critere tabou
-        if((listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
-            // Critere d'aspiration
-            || coutTest < coutMeilleure)
-            // si le mouvement est meilleur que les precedents
-            && (!minDefini || coutTest <= coutMin))
-        {
-            // Si on trouve un mouvement strictement meilleur, on vide la liste des meilleurs mouvements
-            if(!minDefini || coutTest < coutMin)
+            if(cout < couts[pivot])
             {
-                listeMeilleurs->clear();
+                if(right==left + 1)
+                {
+                    right = left;
+                }
+                else
+                {
+                    right = pivot - 1;
+                }
             }
-            // Enregistrement de cette configuration en tant que meilleure config
-            coutMin = coutTest;
-            minDefini = true;
-            // Ajout de ce mouvement dans la liste des meilleurs
-            listeMeilleurs->push_back(mouvementActuel);
+            if(cout == couts[pivot])
+            {
+                left = right = pivot;
+            }
         }
+        if(couts[left] < cout)
+        {
+            left++;
+        }
+        for(i = cnt - 1; i > left - 1; i--)
+        {
+            couts[i+1] = couts[i];
+            populationCopy[i+1] = population[i];
+        }
+        couts[left] = cout;
+        populationCopy[left] = population[cnt];
     }
+    delete[] population;
+    population = populationCopy;
 }
 
 // Algorithme tabou
-CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe, bool diversification)
+CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier)
 {
     // Variables pour l'algorithme tabou de base
-    Mouvement mv;
     ofstream& fichierLocal = *fichier;
     int iteration = 1;
-    int vraisMouvementsTotal = 0, fmin, fmax, coutActuelle;
-    int k = configInit->k, v = configInit->v, N = configInit->N;
-	CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
-    CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
-    list<Mouvement> listeMeilleurs;
+    int fmin, fmax, i;
+    CA_Solution **populationParents = new CA_Solution*[tailleParents];
+    CA_Solution **populationEnfants = new CA_Solution*[tailleEnfants];
+    int *coutsParents = new int[tailleParents];
+    int *coutsEnfants = new int[tailleEnfants];
+    CA_Solution* meilleureConfig = nullptr; // Meilleures des configurations testées jusqu'alors
+
+    for(i = 0; i < tailleParents; i++)
+    {
+        populationParents[i] = configurationAleatoire(v, k, N);
+    }
+    calculerCouts(populationParents, coutsParents, tailleParents);
 
     // Variables pour la prise en compte du temps d'execution
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now(), dateDebutPhase = dateDebut;
@@ -170,75 +127,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     double dureeMillisecondes;
     const double tempsMax = 60000*5.4/8.6;
 
-    // Variables pour la diversification
-    bool ***presence;
-    int ***dernierePresence;
-    int ***frequence;
-
-    // Allocation de la memoire pour les memoires a long terme : presence, frequence et derniere presence des symboles
-    if(diversification)
-    {
-        presence = new bool**[N];
-        for(int i1=0; i1<N; i1++)
-        {
-            presence[i1] = new bool*[k];
-            for(int i2=0; i2<k; i2++)
-            {
-                presence[i1][i2] = new bool[v];
-                for(int i3=0; i3<v; i3++)
-                {
-                    presence[i1][i2][i3] = (configInit->solution[i1*k+i2] == i3);
-                }
-            }
-        }
-
-        dernierePresence = new int**[N];
-        for(int i1=0; i1<N; i1++)
-        {
-            dernierePresence[i1] = new int*[k];
-            for(int i2=0; i2<k; i2++)
-            {
-                dernierePresence[i1][i2] = new int[v];
-                for(int i3=0; i3<v; i3++)
-                {
-                    dernierePresence[i1][i2][i3] = 0;
-                }
-            }
-        }
-
-        frequence = new int**[N];
-        for(int i1=0; i1<N; i1++)
-        {
-            frequence[i1] = new int*[k];
-            for(int i2=0; i2<k; i2++)
-            {
-                frequence[i1][i2] = new int[v];
-                for(int i3=0; i3<v; i3++)
-                {
-                    frequence[i1][i2][i3] = 0;
-                }
-            }
-        }
-    }
-
-    // Initialisation de la liste taboue : grande matrice contenant le numero de l'iteration jusqu'a
-    // laquelle l'attribut est tabou
-    // Un attribut est de la forme (ligne, colonne, symbole)
-    int ***listeTaboue;
-    listeTaboue = new int**[N];
-    for(int i1=0; i1<N; i1++)
-    {
-        listeTaboue[i1] = new int*[k];
-        for(int i2=0; i2<k; i2++)
-        {
-            listeTaboue[i1][i2] = new int[v];
-            for(int i3=0; i3<v; i3++)
-            {
-                listeTaboue[i1][i2][i3] = 0;
-            }
-        }
-    }
-
+#if 0
     int coutMeilleure = configInit->verifierSolution();
     meilleureConfig->erreurs = coutMeilleure;
     fmin = fmax = coutMeilleure;
@@ -379,6 +268,7 @@ CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe
     // Enregistrement pour les statistiques
     meilleureConfig->nbIt = iteration;
     meilleureConfig->nbMvt = vraisMouvementsTotal;
+#endif
 	return(meilleureConfig);
 }
 
@@ -419,9 +309,8 @@ void genererResultats(int nbExec, bool diversification)
             // On execute l'algorithme plusieurs fois
             for(int i = 0; i < nbExec; i++)
             {
-                CA_Solution* configInit = configurationAleatoire(nbSymboles, nbColonnes, nbLignes);
                 start = chrono::system_clock::now();
-                solution = tabou(configInit, NULL, longueurListe, diversification);
+                solution = evolution(nbSymboles, nbColonnes, nbLignes, 50, 200, nullptr);
                 realTime = chrono::system_clock::now()-start;
                 temps = 1000*realTime.count();
                 if(i == 0)
@@ -503,16 +392,14 @@ int main()
     srand(seed);
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(10, true);
+    //genererResultats(10, true);
 
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
-    /*CA_Solution* configInit = configurationAleatoire(8, 15, 108);
     ofstream outfile("output");
     if(outfile.is_open())
     {
-        CA_Solution* configTabou = tabou(configInit, &outfile, 40, false);
-        cout << "Erreurs : " << configTabou->erreurs << " iterations : " << configTabou->nbIt << endl;
-        delete configTabou;
+        CA_Solution* configEvolution = evolution(3, 20, 25, 50, 200, &outfile);
+        cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;
+        delete configEvolution;
     }
-    delete configInit;*/
 }
