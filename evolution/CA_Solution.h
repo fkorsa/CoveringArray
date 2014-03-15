@@ -15,6 +15,7 @@ class CA_Solution
 {
 public:
 	CA_Solution(int val, int col, vector<int> resultat);
+    CA_Solution(int val, int col, int lignes);
     CA_Solution(const CA_Solution& sol);
     ~CA_Solution();
 

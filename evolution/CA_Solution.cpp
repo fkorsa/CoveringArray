@@ -49,6 +49,53 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
 
 }
 
+CA_Solution::CA_Solution(int val, int col, int lignes)
+{
+    v = val;
+    k = col;
+    N = lignes;
+    solution = vector<int>(k*N);
+    nbIt = 0;
+    nbMvt = 0;
+    // Génère toutes les contraintes élémentaires
+    nbContraintes = (k*(k-1)*v*v)/2;
+    erreurs = -1;
+    erreursDernierMv = -1;
+
+    // Allocation des ressources pour les contraintes
+    contraintes = new bool***[k];
+    for(int i1=0; i1<k; i1++) {
+        contraintes[i1] = new bool**[k];
+        for(int i2=0; i2<k; i2++) {
+            contraintes[i1][i2] = new bool*[v];
+            for(int i3=0; i3<v; i3++) {
+                contraintes[i1][i2][i3] = new bool[v];
+                for(int i4=0; i4<v; i4++) {
+                    contraintes[i1][i2][i3][i4] = false;
+                }
+            }
+        }
+    }
+
+    // Allocation des ressources pour les contraintes temporaires
+    copieContraintesAncien = new bool*[k];
+    copieContraintesNouveau = new bool*[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        copieContraintesAncien[i1] = new bool[v];
+        copieContraintesNouveau[i1] = new bool[v];
+    }
+    mvtCourant.mAncienSymbole = solution[0];
+    if(solution[0] != 0)
+    {
+        mvtCourant.mSymbole = 0;
+    }
+    else
+    {
+        mvtCourant.mSymbole = 1;
+    }
+}
+
 CA_Solution::CA_Solution(const CA_Solution& sol)
 {
     // Copie membre a membre
