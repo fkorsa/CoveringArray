@@ -64,7 +64,14 @@ void calculerCouts(CA_Solution **population, int *couts, int taille)
     for(cnt = 1; cnt < taille; cnt++)
     {
         // Calcul du cout courant
-        cout = population[cnt]->verifierSolution();
+        if(population[cnt]->erreurs != -1)
+        {
+            cout = population[cnt]->erreurs;
+        }
+        else
+        {
+            cout = population[cnt]->verifierSolution();
+        }
         left = 0;
         right = cnt - 1;
         // Determination de la place du nouveau cout dans le tableau (trie)
@@ -114,11 +121,16 @@ void calculerCouts(CA_Solution **population, int *couts, int taille)
     delete[] populationCopy;
 }
 
+enum TYPE_CROISEMENT
+{
+    CROISEMENT_SYMBOLE,
+    CROISEMENT_LIGNE
+};
+
 // Croisement sur une population, effectuee sur les symboles. Deux parents choisis aleatoirement produisent un enfant
 // qui a pour symboles les symboles des deux parents, choisis aleatoirement avec une probabilite uniforme (0.5).
 // On produit 'tailleEnfants' enfants.
-void croisementSymbole(CA_Solution **population, int tailleParents, int tailleEnfants,
-                       int v, int k, int N)
+void croisementSymbole(CA_Solution **population, int tailleParents, int tailleEnfants, int v, int k, int N)
 {
     int e, p1, p2, indice, r;
     for(e = 0; e < tailleEnfants; e++)
@@ -141,12 +153,48 @@ void croisementSymbole(CA_Solution **population, int tailleParents, int tailleEn
     }
 }
 
+// Croisement sur une population, effectuee sur les lignes. Deux parents choisis aleatoirement produisent un enfant
+// qui a pour lignes les lignes des deux parents, choisies aleatoirement avec une probabilite uniforme (0.5).
+// On produit 'tailleEnfants' enfants.
+void croisementLigne(CA_Solution **population, int tailleParents, int tailleEnfants, int v, int k, int N)
+{
+    int e, p1, p2, ligne, r, c;
+    for(e = 0; e < tailleEnfants; e++)
+    {
+        p1 = rand()%tailleParents;
+        p2 = rand()%tailleParents;
+        population[tailleParents+e] = new CA_Solution(v, k, N);
+        for(ligne = 0; ligne < N; ligne++)
+        {
+            r = rand()%2;
+            if(r == 0)
+            {
+                for(c = 0; c < k; c++)
+                {
+                    population[tailleParents+e]->solution[ligne*k + c] = population[p1]->solution[ligne*k + c];
+                }
+            }
+            else
+            {
+                for(c = 0; c < k; c++)
+                {
+                    population[tailleParents+e]->solution[ligne*k + c] = population[p2]->solution[ligne*k + c];
+                }
+            }
+        }
+    }
+}
+
 // Mutation des enfants. On modifie 'pourcent' symboles de chaque enfant, le nouveau symbole
 // etant determine aleatoirement.
 void mutation(CA_Solution **populationEnfants, int tailleEnfants, int v, int k, int N, float pourcent)
 {
     int e, indice, col, ligne, symbole;
     int limite = pourcent*k*N;
+    if(limite == 0)
+    {
+        limite = 1;
+    }
     for(e = 0; e < tailleEnfants; e++)
     {
         for(indice = 0; indice < limite; indice++)
@@ -159,8 +207,33 @@ void mutation(CA_Solution **populationEnfants, int tailleEnfants, int v, int k, 
     }
 }
 
+// Calcul de l'indicateur de diversite. Cette fonction est tres couteuse en temps de calcul,
+// elle n'est donc pas utilisee lors de la generation des resultats mais seulement au moment
+// de la determination des valeurs des parametres.
+int calculerDiversification(CA_Solution **population, int taille, int k, int N)
+{
+    int i, j, indice;
+    int d = 0;
+    for(i = 0; i < taille - 1; i++)
+    {
+        for(j = i+1; j < taille; j++)
+        {
+            for(indice = 0; indice < k*N; indice++)
+            {
+                if(population[i]->solution[indice] != population[j]->solution[indice])
+                {
+                    d++;
+                }
+            }
+        }
+    }
+    return d;
+}
+
 // Algorithme genetique
-CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier, float pourcentMutation)
+CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants,
+                       ofstream *fichier, float pourcentMutation, TYPE_CROISEMENT type,
+                       bool afficherDiversite)
 {
     // Variables pour l'algorithme tabou de base
     ofstream& fichierLocal = *fichier;
@@ -179,7 +252,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
     calculerCouts(population, couts, tailleParents);
 
     // Variables pour la prise en compte du temps d'execution
-    chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();
+    chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();   
     chrono::duration<double> duree;
     double dureeMillisecondes;
     const double tempsMax = 60000*5.4/8.6;
@@ -195,10 +268,22 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
     while((coutMeilleure > 0 || fichier) && dureeMillisecondes < tempsMax)
     {
         // Croisement
-        croisementSymbole(population, tailleParents, tailleEnfants, v, k, N);
+        if(type == CROISEMENT_LIGNE)
+        {
+            croisementLigne(population, tailleParents, tailleEnfants, v, k, N);
+        }
+        else
+        {
+            croisementSymbole(population, tailleParents, tailleEnfants, v, k, N);
+        }
 
         // Mutation
         mutation(&population[tailleParents], tailleEnfants, v, k, N, pourcentMutation);
+
+        if(afficherDiversite)
+        {
+            cout << "Diversite : " << calculerDiversification(population, tailleParents + tailleEnfants, k, N) << endl;
+        }
 
         // Calcul et des couts, tri dans l'ordre croissant du tableau des couts et tri de la population
         // dans le meme ordre
@@ -216,7 +301,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
             delete meilleureConfig;
             meilleureConfig = new CA_Solution(*(population[0]));
             coutMeilleure = couts[0];
-            cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+            //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
         }
 
         iteration++;
@@ -240,7 +325,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 
 // Lit le fichier "inputData" pour executer 'nbExec' fois l'algorithme tabou, et relever des
 // statistiques dans le fichier "output"
-void genererResultats(int nbExec)
+void genererResultats(int nbExec, TYPE_CROISEMENT type)
 {
     ifstream infile("inputData");
     ofstream outfile("output");
@@ -276,7 +361,7 @@ void genererResultats(int nbExec)
             for(int i = 0; i < nbExec; i++)
             {
                 start = chrono::system_clock::now();
-                solution = evolution(nbSymboles, nbColonnes, nbLignes, 10, 200, nullptr, 0.01);
+                solution = evolution(nbSymboles, nbColonnes, nbLignes, 20, 20, nullptr, 0.0001, type, false);
                 realTime = chrono::system_clock::now()-start;
                 temps = 1000*realTime.count();
                 if(i == 0)
@@ -358,17 +443,17 @@ int main()
     srand(seed);
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    //genererResultats(10);
+    genererResultats(10, CROISEMENT_SYMBOLE);
 
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
     /*ofstream outfile("output");
     if(outfile.is_open())
     {
-        CA_Solution* configEvolution = evolution(3, 20, 25, 10, 200, &outfile, 0.01);
+        CA_Solution* configEvolution = evolution(3, 20, 25, 10, 200, &outfile, 0.01, CROISEMENT_LIGNE, false);
         cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;
         delete configEvolution;
     }*/
 
-    CA_Solution* configEvolution = evolution(3, 20, 18, 10, 200, nullptr, 0.01);
-    cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;
+    /*CA_Solution* configEvolution = evolution(8, 15, 130, 20, 20, nullptr, 0.0001, CROISEMENT_SYMBOLE, false);
+    cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;*/
 }
