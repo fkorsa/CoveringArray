@@ -191,10 +191,10 @@ void mutation(CA_Solution **populationEnfants, int tailleEnfants, int v, int k, 
 {
     int e, indice, col, ligne, symbole;
     int limite = pourcent*k*N;
-    if(limite == 0)
+    /*if(limite == 0)
     {
         limite = 1;
-    }
+    }*/
     for(e = 0; e < tailleEnfants; e++)
     {
         for(indice = 0; indice < limite; indice++)
@@ -285,6 +285,14 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
             cout << "Diversite : " << calculerDiversification(population, tailleParents + tailleEnfants, k, N) << endl;
         }
 
+        // Enregistrement de la progression du cout dans un fichier
+        if(fichier && iteration%2 == 0)
+        {
+            fichierLocal << iteration << " " << calculerDiversification(population, tailleParents + tailleEnfants, k, N)
+                         << " " <<coutMeilleure << endl;
+            cout << iteration << " " << coutMeilleure << endl;
+        }
+
         // Calcul et des couts, tri dans l'ordre croissant du tableau des couts et tri de la population
         // dans le meme ordre
         calculerCouts(population, couts, tailleParents+tailleEnfants);
@@ -301,7 +309,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
             delete meilleureConfig;
             meilleureConfig = new CA_Solution(*(population[0]));
             coutMeilleure = couts[0];
-            //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+            cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
         }
 
         iteration++;
@@ -309,13 +317,6 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
         // Actualisation du temps passe
         duree = chrono::system_clock::now()-dateDebut;
         dureeMillisecondes = 1000*duree.count();
-
-        // Enregistrement de la progression du cout dans un fichier
-        if(fichier && iteration%50 == 0)
-        {
-            fichierLocal << iteration << " " << coutMeilleure << endl;
-            cout << iteration << " " << coutMeilleure << endl;
-        }
 	}
     // Enregistrement pour les statistiques
     meilleureConfig->nbIt = iteration;
@@ -443,17 +444,17 @@ int main()
     srand(seed);
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(10, CROISEMENT_SYMBOLE);
+    //genererResultats(10, CROISEMENT_SYMBOLE);
 
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
-    /*ofstream outfile("output");
+    ofstream outfile("output");
     if(outfile.is_open())
     {
-        CA_Solution* configEvolution = evolution(3, 20, 25, 10, 200, &outfile, 0.01, CROISEMENT_LIGNE, false);
+        CA_Solution* configEvolution = evolution(3, 20, 17, 20, 20, &outfile, 0.000, CROISEMENT_LIGNE, false);
         cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;
         delete configEvolution;
-    }*/
-
-    /*CA_Solution* configEvolution = evolution(8, 15, 130, 20, 20, nullptr, 0.0001, CROISEMENT_SYMBOLE, false);
+    }
+/*
+    CA_Solution* configEvolution = evolution(8, 15, 130, 20, 20, nullptr, 0.0001, CROISEMENT_SYMBOLE, false);
     cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;*/
 }
