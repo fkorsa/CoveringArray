@@ -2,8 +2,8 @@
 #include <time.h>
 #include <chrono>
 #include <string>
-#include <ca_solution.h>
-#include <utils.h>
+#include "ca_solution.h"
+#include "utils.h"
 
 using namespace std;
 

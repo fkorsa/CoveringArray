@@ -3,14 +3,14 @@
 
 #include <fstream>
 #include <cstring>
-#include <cmatrix.h>
+#include "cmatrix.h"
 #include <cstdlib>
 #include <chrono>
 #include <vector>
 #include <iostream>
 #include <math.h>
 
-#include <utils.h>
+#include "utils.h"
 
 using namespace std;
 
