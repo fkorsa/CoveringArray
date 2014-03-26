@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -c -std=c++11
 INCPATH = -I.
 LIBS = 
-OBJ =  CA_Solution.o main.o
+OBJ =  cmatrix.o ca_solution.o main.o
 TARGET = covering_array
 
 all: $(TARGET)

@@ -51,6 +51,105 @@ CA_Solution* configurationAleatoire(int v, int k, int N) {
 	return configuration;
 }
 
+// Choix du meilleur voisin, avec diversification et liste taboue : la fonction de cout est perturbee avec les frequences
+// des symboles, pour qu'on se dirige vers des regions inexplorees de l'espace de recherche
+void choixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration,
+                          bool*** presence, int ***dernierePresence, int ***frequence, int coutMeilleure)
+{
+    bool minDefini, premiereIteration;
+    int coutTest, coutMin, frequenceNouveau, frequenceAncien;
+    Mouvement mouvementActuel;
+
+    minDefini = false;
+    premiereIteration = true;
+    mouvementActuel = configTestee->mouvementCourant();
+    while(!mouvementActuel.estFinal)
+    {
+        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
+        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
+        // des mouvements possibles.
+        if(!premiereIteration)
+        {
+            mouvementActuel = configTestee->mouvementSuivant();
+        }
+        premiereIteration = false;
+        frequenceNouveau = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
+        // Ajustement de la frequence du nouveau symbole pour tenir compte de la presence eventuelle du symbole
+        // jusqu'ici
+        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole])
+        {
+            frequenceNouveau += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
+        }
+        frequenceAncien = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
+        // Ajustement de la frequence de l'ancien symbole pour tenir compte de sa presence eventuelle
+        // jusqu'ici
+        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole])
+        {
+            frequenceAncien += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
+        }
+        coutTest = configTestee->verifierSolution(mouvementActuel) + frequenceNouveau - frequenceAncien;
+        // Critere tabou
+        if(listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
+            // si le mouvement est meilleur que les precedents
+            && (!minDefini || coutTest <= coutMin))
+        {
+            // Si on trouve un mouvement strictement meilleur, on vide la liste des meilleurs mouvements
+            if(!minDefini || coutTest < coutMin)
+            {
+                listeMeilleurs->clear();
+            }
+            // Enregistrement de cette configuration en tant que meilleure config
+            coutMin = coutTest;
+            minDefini = true;
+            // Ajout de ce mouvement dans la liste des meilleurs
+            listeMeilleurs->push_back(mouvementActuel);
+        }
+    }
+}
+
+// Choix du meilleur voisin avec liste taboue. On enregistre la liste des meilleurs mouvement, qui seront departages
+// aleatoirement par la fonction appelante (qui est toujours la fonction tabou(...))
+void choixMouvement(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration, int coutMeilleure)
+{
+    bool minDefini, premiereIteration;
+    int coutTest, coutActuelle, coutMin;
+    Mouvement mouvementActuel;
+
+    minDefini = false;
+    premiereIteration = true;
+    coutActuelle = configTestee->erreurs;
+    mouvementActuel = configTestee->mouvementCourant();
+    while(!mouvementActuel.estFinal)
+    {
+        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
+        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
+        // des mouvements possibles.
+        if(!premiereIteration)
+        {
+            mouvementActuel = configTestee->mouvementSuivant();
+        }
+        premiereIteration = false;
+        coutTest = configTestee->verifierSolution(mouvementActuel);
+        // Critere tabou
+        if((listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
+            // Critere d'aspiration
+            || coutTest < coutMeilleure)
+            // si le mouvement est meilleur que les precedents
+            && (!minDefini || coutTest <= coutMin))
+        {
+            // Si on trouve un mouvement strictement meilleur, on vide la liste des meilleurs mouvements
+            if(!minDefini || coutTest < coutMin)
+            {
+                listeMeilleurs->clear();
+            }
+            // Enregistrement de cette configuration en tant que meilleure config
+            coutMin = coutTest;
+            minDefini = true;
+            // Ajout de ce mouvement dans la liste des meilleurs
+            listeMeilleurs->push_back(mouvementActuel);
+        }
+    }
+}
 
 // Algorithme tabou
 CA_Solution* tabou(CA_Solution* configInit, ofstream *fichier, int longueurListe, bool diversification)

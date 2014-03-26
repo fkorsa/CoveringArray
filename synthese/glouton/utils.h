@@ -1,0 +1,12 @@
+#ifndef DEFINES_H
+#define DEFINES_H
+
+enum ALGO_TYPE
+{
+    PURE_GREEDY,
+    GREEDY_STOCHASTIC,
+    RANDOM_LINEAR,
+    RANDOM_EXP
+};
+
+#endif // DEFINES_H
