@@ -1,7 +1,6 @@
 #include "generateur.h"
 
-Generateur::Generateur(int tempsMax, int nbExec) :
-    m_tempsMax(tempsMax),
+Generateur::Generateur(int nbExec) :
     m_nbExec(nbExec)
 {
     srand(time(NULL));
@@ -45,6 +44,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
         outfile.open("outputDescente");
         break;
     case TABOU:
+    case TABOU_DIVERSIFIE:
         infile.open("inputTabou");
         outfile.open("outputTabou");
         break;
@@ -52,14 +52,19 @@ void Generateur::GenererResultats(ALGO_TYPE type)
         infile.open("inputRecuit");
         outfile.open("outputRecuit");
         break;
+    case EVOLUTION:
+        infile.open("inputEvolution");
+        outfile.open("outputEvolution");
+        break;
     }
 
     if(outfile.is_open())
     {
-        outfile << "NombreSymboles NombreColonnes NombreLignes CoutMin CoutMoyen CoutMax TempsMoyen ItMoyen" << endl;
-        while (infile >> nbSymboles >> nbColonnes >> nbLignes)
+        outfile << "NombreSymboles NombreColonnes CoutMin CoutMoyen CoutMax TempsMoyen ItMoyen" << endl;
+        while (infile >> nbSymboles >> nbColonnes >> nbLignes >> m_tempsMax)
         {
-            if(type == TABOU)
+            m_tempsMax *= 1000;
+            if(type == TABOU || type == TABOU_DIVERSIFIE)
             {
                 infile >> longueurListe;
             }
@@ -77,12 +82,17 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                 switch(type)
                 {
                 case GLOUTON:
-                    TesterGlouton();
+                    resultatsCourants = TesterGlouton(nbSymboles, nbColonnes);
                     break;
                 case DESCENTE:
-                    TesterDescente();
+                    resultatsCourants = TesterDescente(nbSymboles, nbColonnes, nbLignes);
                     break;
                 case TABOU:
+                    configInit = ConfigurationAleatoire(nbSymboles, nbColonnes, nbLignes);
+                    resultatsCourants = TesterTabou(configInit, longueurListe, false);
+                    delete configInit;
+                    break;
+                case TABOU_DIVERSIFIE:
                     configInit = ConfigurationAleatoire(nbSymboles, nbColonnes, nbLignes);
                     resultatsCourants = TesterTabou(configInit, longueurListe, true);
                     delete configInit;
@@ -122,7 +132,6 @@ void Generateur::GenererResultats(ALGO_TYPE type)
             // On enregistre les donnees dans le fichier output
             outfile << nbSymboles << " "
                     << nbColonnes << " "
-                    << nbLignes << " "
                     << coutMin << " "
                     << coutMoyen << " "
                     << coutMax << " "
@@ -136,14 +145,21 @@ void Generateur::GenererResultats(ALGO_TYPE type)
 
 void Generateur::TesterTout()
 {
-    cout << "Generation de glouton" << endl;
-    GenererResultats(GLOUTON);
     cout << "Generation de descente" << endl;
     GenererResultats(DESCENTE);
+
+    /*
     cout << "Generation de tabou" << endl;
     GenererResultats(TABOU);
+    cout << "Generation de descente" << endl;
+    GenererResultats(DESCENTE);
+    cout << "Generation de glouton" << endl;
+    GenererResultats(GLOUTON);
+    cout << "Generation de tabou diversifie" << endl;
+    GenererResultats(TABOU_DIVERSIFIE);
     cout << "Generation de recuit" << endl;
     GenererResultats(RECUIT_SIMULE);
     cout << "Generation de evolution" << endl;
-    GenererResultats(EVOLUTION);
+    GenererResultats(EVOLUTION);*/
+
 }

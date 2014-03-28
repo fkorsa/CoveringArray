@@ -44,6 +44,12 @@ public:
         }
     }
 
+    bool operator==(const Mouvement& mv)
+    {
+        return mAncienSymbole == mv.mAncienSymbole && mSymbole == mv.mSymbole
+                && mCol == mv.mCol && mLigne == mv.mLigne;
+    }
+
     int mLigne;
     int mCol;
     int mSymbole, mAncienSymbole;

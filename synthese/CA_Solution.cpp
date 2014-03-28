@@ -1,12 +1,7 @@
 #include "CA_Solution.h"
 
-
-CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
+void CA_Solution::allouerMemoire()
 {
-	v = val;
-	k = col;
-	solution = resultat;
-	N = solution.size()/k;
     nbIt = 0;
     nbMvt = 0;
     // Génère toutes les contraintes élémentaires
@@ -14,29 +9,6 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
     erreurs = -1;
     erreursDernierMv = -1;
 
-    // Allocation des ressources pour les contraintes
-    contraintes = new bool***[k];
-    for(int i1=0; i1<k; i1++) {
-        contraintes[i1] = new bool**[k];
-        for(int i2=0; i2<k; i2++) {
-            contraintes[i1][i2] = new bool*[v];
-            for(int i3=0; i3<v; i3++) {
-                contraintes[i1][i2][i3] = new bool[v];
-                for(int i4=0; i4<v; i4++) {
-                    contraintes[i1][i2][i3][i4] = false;
-                }
-            }
-        }
-    }
-
-    // Allocation des ressources pour les contraintes temporaires
-    copieContraintesAncien = new bool*[k];
-    copieContraintesNouveau = new bool*[k];
-    for(int i1=0; i1<k; i1++)
-    {
-        copieContraintesAncien[i1] = new bool[v];
-        copieContraintesNouveau[i1] = new bool[v];
-    }
     mvtCourant.mAncienSymbole = solution[0];
     if(solution[0] != 0)
     {
@@ -47,6 +19,60 @@ CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
         mvtCourant.mSymbole = 1;
     }
 
+    // Allocation des ressources pour les contraintes
+    occurencesCouples = new int***[k];
+    for(int i1=0; i1<k; i1++) {
+        occurencesCouples[i1] = new int**[k];
+        for(int i2=0; i2<k; i2++) {
+            occurencesCouples[i1][i2] = new int*[v];
+            for(int i3=0; i3<v; i3++) {
+                occurencesCouples[i1][i2][i3] = new int[v];
+                for(int i4=0; i4<v; i4++) {
+                    occurencesCouples[i1][i2][i3][i4] = 0;
+                }
+            }
+        }
+    }
+
+    sousContraintesSymboles = new int*[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        sousContraintesSymboles[i1] = new int[v];
+        for(int i2=0; i2<v; i2++)
+        {
+            sousContraintesSymboles[i1][i2] = 0;
+        }
+    }
+
+    sousContraintesColonnes = new int[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        sousContraintesColonnes[i1] = 0;
+    }
+
+    deltas = new int**[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        deltas[i1] = new int*[N];
+        for(int i2=0; i2<N; i2++)
+        {
+            deltas[i1][i2] = new int[v];
+            for(int i3=0; i3<v; i3++)
+            {
+                deltas[i1][i2][i3] = 0;
+            }
+        }
+    }
+}
+
+CA_Solution::CA_Solution(int val, int col, vector<int> resultat)
+{
+	v = val;
+	k = col;
+	solution = resultat;
+	N = solution.size()/k;
+
+    allouerMemoire();
 }
 
 CA_Solution::CA_Solution(int val, int col, int lignes)
@@ -55,45 +81,8 @@ CA_Solution::CA_Solution(int val, int col, int lignes)
     k = col;
     N = lignes;
     solution = vector<int>(k*N);
-    nbIt = 0;
-    nbMvt = 0;
-    // Génère toutes les contraintes élémentaires
-    nbContraintes = (k*(k-1)*v*v)/2;
-    erreurs = -1;
-    erreursDernierMv = -1;
 
-    // Allocation des ressources pour les contraintes
-    contraintes = new bool***[k];
-    for(int i1=0; i1<k; i1++) {
-        contraintes[i1] = new bool**[k];
-        for(int i2=0; i2<k; i2++) {
-            contraintes[i1][i2] = new bool*[v];
-            for(int i3=0; i3<v; i3++) {
-                contraintes[i1][i2][i3] = new bool[v];
-                for(int i4=0; i4<v; i4++) {
-                    contraintes[i1][i2][i3][i4] = false;
-                }
-            }
-        }
-    }
-
-    // Allocation des ressources pour les contraintes temporaires
-    copieContraintesAncien = new bool*[k];
-    copieContraintesNouveau = new bool*[k];
-    for(int i1=0; i1<k; i1++)
-    {
-        copieContraintesAncien[i1] = new bool[v];
-        copieContraintesNouveau[i1] = new bool[v];
-    }
-    mvtCourant.mAncienSymbole = solution[0];
-    if(solution[0] != 0)
-    {
-        mvtCourant.mSymbole = 0;
-    }
-    else
-    {
-        mvtCourant.mSymbole = 1;
-    }
+    allouerMemoire();
 }
 
 CA_Solution::CA_Solution(const CA_Solution& sol)
@@ -110,25 +99,48 @@ CA_Solution::CA_Solution(const CA_Solution& sol)
     nbContraintes = sol.nbContraintes;
 
     // Copie des contraintes
-    contraintes = new bool***[k];
+    occurencesCouples = new int***[k];
     for(int i1=0; i1<k; i1++) {
-        contraintes[i1] = new bool**[k];
+        occurencesCouples[i1] = new int**[k];
         for(int i2=0; i2<k; i2++) {
-            contraintes[i1][i2] = new bool*[v];
+            occurencesCouples[i1][i2] = new int*[v];
             for(int i3=0; i3<v; i3++) {
-                contraintes[i1][i2][i3] = new bool[v];
+                occurencesCouples[i1][i2][i3] = new int[v];
                 for(int i4=0; i4<v; i4++) {
-                    contraintes[i1][i2][i3][i4] = sol.contraintes[i1][i2][i3][i4];
+                    occurencesCouples[i1][i2][i3][i4] = sol.occurencesCouples[i1][i2][i3][i4];
                 }
             }
         }
     }
-    copieContraintesAncien = new bool*[k];
-    copieContraintesNouveau = new bool*[k];
+
+    sousContraintesSymboles = new int*[k];
     for(int i1=0; i1<k; i1++)
     {
-        copieContraintesAncien[i1] = new bool[v];
-        copieContraintesNouveau[i1] = new bool[v];
+        sousContraintesSymboles[i1] = new int[v];
+        for(int i2=0; i2<v; i2++)
+        {
+            sousContraintesSymboles[i1][i2] = sol.sousContraintesSymboles[i1][i2];
+        }
+    }
+
+    sousContraintesColonnes = new int[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        sousContraintesColonnes[i1] = sol.sousContraintesColonnes[i1];
+    }
+
+    deltas = new int**[k];
+    for(int i1=0; i1<k; i1++)
+    {
+        deltas[i1] = new int*[N];
+        for(int i2=0; i2<N; i2++)
+        {
+            deltas[i1][i2] = new int[v];
+            for(int i3=0; i3<v; i3++)
+            {
+                deltas[i1][i2][i3] = sol.deltas[i1][i2][i3];
+            }
+        }
     }
 }
 
@@ -137,21 +149,34 @@ CA_Solution::~CA_Solution()
     // Liberation des ressources
     for(int i1=0; i1<k; i1++)
     {
-        delete[] copieContraintesAncien[i1];
-        delete[] copieContraintesNouveau[i1];
         for(int i2=0; i2<k; i2++)
         {
             for(int i3=0; i3<v; i3++)
             {
-                delete[] contraintes[i1][i2][i3];
+                delete[] occurencesCouples[i1][i2][i3];
             }
-            delete[] contraintes[i1][i2];
+            delete[] occurencesCouples[i1][i2];
         }
-        delete[] contraintes[i1];
+        delete[] occurencesCouples[i1];
     }
-    delete[] contraintes;
-    delete[] copieContraintesAncien;
-    delete[] copieContraintesNouveau;
+    delete[] occurencesCouples;
+
+    for(int i1=0; i1<k; i1++)
+    {
+        delete[] sousContraintesSymboles[i1];
+    }
+    delete[] sousContraintesSymboles;
+    delete[] sousContraintesColonnes;
+
+    for(int i1=0; i1<k; i1++)
+    {
+        for(int i2=0; i2<N; i2++)
+        {
+            delete[] deltas[i1][i2];
+        }
+        delete[] deltas[i1];
+    }
+    delete[] deltas;
 }
 
 void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à partir d'une solution
@@ -182,16 +207,31 @@ void CA_Solution::ecrireFichier(string chemin) { // écrit dans un fichier à pa
 int CA_Solution::verifierSolution()
 { // vérifie si une solution est valide sachant les v,k,N,sol et renvoie le nombre d'erreurs
     int contraintesSatisfaites = 0;
-    for(int i1=0; i1<k; i1++)
+    for(int i1=0; i1<k - 1; i1++)
     {
-        for(int i2=0; i2<k; i2++)
+        for(int i2=i1+1; i2<k; i2++)
         {
             for(int i3=0; i3<v; i3++)
             {
                 for(int i4=0; i4<v; i4++)
                 {
-                    contraintes[i1][i2][i3][i4] = false;
+                    occurencesCouples[i1][i2][i3][i4] = 0;
                 }
+            }
+        }
+        for(int i4=0; i4<v; i4++)
+        {
+            sousContraintesSymboles[i1][i4] = (k-1)*v;
+        }
+        sousContraintesColonnes[i1] = (k-1)*v*v;
+    }
+    for(int i1=0; i1<k; i1++)
+    {
+        for(int i2=0; i2<N; i2++)
+        {
+            for(int i3=0; i3<v; i3++)
+            {
+                deltas[i1][i2][i3] = 0;
             }
         }
     }
@@ -204,19 +244,48 @@ int CA_Solution::verifierSolution()
             for(int c2=c1+1; c2<k; c2++)
             {
 				int v2 = solution[l*k+c2];
-                if (!contraintes[c1][c2][v1][v2])
+                if (!occurencesCouples[c1][c2][v1][v2])
                 {
 					contraintesSatisfaites++;
-					contraintes[c1][c2][v1][v2] = true;
+                    sousContraintesSymboles[c1][v1]--;
+                    sousContraintesSymboles[c2][v2]--;
+                    sousContraintesColonnes[c1]--;
+                    sousContraintesColonnes[c2]--;
 				}
+                occurencesCouples[c1][c2][v1][v2]++;
 			}
 		}
 	}
+
+    for(int c1 = 0; c1 < k; c1++)
+    {
+        for(int l = 0; l < N; l++)
+        {
+            int s1 = solution[l*k+c1];
+            for(int s = 0; s < v; s++)
+            {
+                if(s != s1)
+                {
+                    deltas[c1][l][s] = calculerDelta(Mouvement(l, c1, s, s1)) - erreurs;
+                }
+                else
+                {
+                    deltas[c1][l][s] = 0;
+                }
+            }
+        }
+    }
 
     erreurs = (nbContraintes - contraintesSatisfaites);
 
     return(erreurs);
 } // Fin fonction vérification
+
+int CA_Solution::verifierSolution(Mouvement mv)
+{
+    //return erreurs + deltas[mv.mCol][mv.mLigne][mv.mSymbole];
+    return calculerDelta(mv);
+}
 
 // Compte le nombre d'erreurs de la matrice resultant du mouvement mv
 // Pour etre efficace, on ne recalcule pas toutes les contraintes. On regarde d'abord
@@ -224,65 +293,31 @@ int CA_Solution::verifierSolution()
 // la ligne. Ensuite, on parcourt la colonne du mouvement de haut en bas, en regardant si le symbole dans la ligne courante
 // est celui qu'on vient d'enlever : si c'est le cas, on retablit les contraintes associees dans la ligne.
 // Enfin, on valide les contraintes induites par le rajout du nouveau symbole dans la case du mouvement.
-int CA_Solution::verifierSolution(Mouvement mv)
+int CA_Solution::calculerDelta(Mouvement mv)
 {
-    // Copie du nombre d'erreurs
     erreursDernierMv = erreurs;
-
-    // Copie de la partie du tableau de contraintes concernee
-    for(int i1=0; i1<k; i1++)
+    for(int i=0; i<mv.mCol; i++)
     {
-        for(int i2=0; i2<v; i2++)
+        if(occurencesCouples[i][mv.mCol][solution[mv.mLigne*k+i]][mv.mAncienSymbole] == 1)
         {
-            if(i1 < mv.mCol)
-            {
-                copieContraintesAncien[i1][i2] = contraintes[i1][mv.mCol][i2][mv.mAncienSymbole];
-                copieContraintesNouveau[i1][i2] = contraintes[i1][mv.mCol][i2][mv.mSymbole];
-            }
-            if(i1 > mv.mCol)
-            {
-                copieContraintesAncien[i1][i2] = contraintes[mv.mCol][i1][mv.mAncienSymbole][i2];
-                copieContraintesNouveau[i1][i2] = contraintes[mv.mCol][i1][mv.mSymbole][i2];
-            }
-        }
-    }
-
-    // Suppression des contraintes entre l'ancien symbole et les autres symboles de la ligne
-    for(int i1=0; i1<k; i1++)
-    {
-        if(copieContraintesAncien[i1][solution[mv.mLigne*k+i1]] && i1 != mv.mCol)
-        {
-            copieContraintesAncien[i1][solution[mv.mLigne*k+i1]] = false;
             erreursDernierMv++;
         }
-    }
-
-    // Retablissement des contraintes enlevees de maniere superflue
-    for(int l=0; l<N; l++)
-    {
-        if(l != mv.mLigne && solution[l*k+mv.mCol] == mv.mAncienSymbole)
+        if(occurencesCouples[i][mv.mCol][solution[mv.mLigne*k+i]][mv.mSymbole] == 0)
         {
-            for(int i1=0; i1<k; i1++)
-            {
-                if(!copieContraintesAncien[i1][solution[l*k+i1]] && i1 != mv.mCol)
-                {
-                    copieContraintesAncien[i1][solution[l*k+i1]] = true;
-                    erreursDernierMv--;
-                }
-            }
-        }
-    }
-
-    // Validation des contraintes remplies par l'ajout du nouveau symbole
-    for(int i1=0; i1<k; i1++)
-    {
-        if(!copieContraintesNouveau[i1][solution[mv.mLigne*k+i1]] && i1 != mv.mCol)
-        {
-            copieContraintesNouveau[i1][solution[mv.mLigne*k+i1]] = true;
             erreursDernierMv--;
         }
     }
-
+    for(int i=mv.mCol + 1; i<k; i++)
+    {
+        if(occurencesCouples[mv.mCol][i][mv.mAncienSymbole][solution[mv.mLigne*k+i]] == 1)
+        {
+            erreursDernierMv++;
+        }
+        if(occurencesCouples[mv.mCol][i][mv.mSymbole][solution[mv.mLigne*k+i]] == 0)
+        {
+            erreursDernierMv--;
+        }
+    }
     return erreursDernierMv;
 }
 
@@ -304,7 +339,7 @@ Mouvement CA_Solution::mouvementSuivant()
     return mv;
 }
 
-void CA_Solution::reinitialiserMouvementCourant()
+void CA_Solution::reinitialiserMouvement()
 {
     mvtCourant.estFinal = false;
     mvtCourant.mLigne = 0;
@@ -317,31 +352,292 @@ void CA_Solution::reinitialiserMouvementCourant()
     }
 }
 
+void CA_Solution::mouvementCritiqueSuivant()
+{
+    mvtCourant.mLigne++;
+    trouverMouvementSuivant();
+    //return mvtCourant;
+}
+
+void CA_Solution::trouverMouvementSuivant()
+{
+    bool trouve = false;
+    while(!trouve && mvtCourant.mCol < k)
+    {
+        if(sousContraintesColonnes[mvtCourant.mCol] == 0)
+        {
+            mvtCourant.mCol++;
+        }
+        else
+        {
+            while(!trouve && mvtCourant.mSymbole < v)
+            {
+                if(sousContraintesSymboles[mvtCourant.mCol][mvtCourant.mSymbole] == 0)
+                {
+                    mvtCourant.mSymbole++;
+                }
+                else
+                {
+                    while(mvtCourant.mLigne < N && solution[mvtCourant.mLigne*k+mvtCourant.mCol] == mvtCourant.mSymbole)
+                    {
+                        mvtCourant.mLigne++;
+                    }
+                    if(mvtCourant.mLigne < N)
+                    {
+                        trouve = true;
+                    }
+                    if(mvtCourant.mLigne == N)
+                    {
+                        mvtCourant.mLigne = 0;
+                        mvtCourant.mSymbole++;
+                    }
+                }
+            }
+            if(!trouve)
+            {
+                mvtCourant.mSymbole = 0;
+                mvtCourant.mCol++;
+            }
+        }
+    }
+    mvtCourant.mAncienSymbole = solution[mvtCourant.mLigne*k + mvtCourant.mCol];
+    if(!trouve)
+    {
+        mvtCourant.estFinal = true;
+        mvtCourant.mLigne = 0;
+        mvtCourant.mCol = 0;
+        mvtCourant.mAncienSymbole = 0;
+        mvtCourant.mSymbole = 0;
+    }
+}
+
+void CA_Solution::reinitialiserMouvementCritique()
+{
+    mvtCourant.estFinal = false;
+    mvtCourant.mLigne = 0;
+    mvtCourant.mCol = 0;
+    mvtCourant.mAncienSymbole = 0;
+    mvtCourant.mSymbole = 0;
+    trouverMouvementSuivant();
+}
+
 // Effectue le mouvement mv : remplace le symbole dans la matrice et recalcule les erreurs et les contraintes.
 // Nous appelons verifierSolution(mv) dans le corps de cette fonction : nous pouvons donc nous contenter
 // de copier les valeurs des contraintes generees par verifierSolution.
 void CA_Solution::appliquerMouvement(Mouvement mv)
 {
-    solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
-
-    verifierSolution(mv);
-    for(int i1=0; i1<k; i1++)
+    erreursDernierMv = erreurs;
+    for(int i=0; i<mv.mCol; i++)
     {
-        for(int i2=0; i2<v; i2++)
+        int s = solution[mv.mLigne*k+i];
+        if(occurencesCouples[i][mv.mCol][s][mv.mAncienSymbole] == 1)
         {
-            if(i1 < mv.mCol)
+            erreursDernierMv++;
+            sousContraintesSymboles[i][s]++;
+            sousContraintesColonnes[i]++;
+            sousContraintesSymboles[mv.mCol][mv.mAncienSymbole]++;
+            sousContraintesColonnes[mv.mCol]++;
+            /*for(int l = 0; l < N; l++)
             {
-                contraintes[i1][mv.mCol][i2][mv.mAncienSymbole] = copieContraintesAncien[i1][i2];
-                contraintes[i1][mv.mCol][i2][mv.mSymbole] = copieContraintesNouveau[i1][i2];
+                if(solution[l*k+i] == s)
+                {
+                    deltas[mv.mCol][l][mv.mAncienSymbole]--;
+                }
+                if(solution[l*k+mv.mCol] == mv.mAncienSymbole && l != mv.mLigne)
+                {
+                    deltas[i][l][s]--;
+                }
+            }*/
+        }
+        /*if(occurencesCouples[i][mv.mCol][s][mv.mAncienSymbole] == 2)
+        {
+            for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s && solution[l*k+mv.mCol] == mv.mAncienSymbole && l != mv.mLigne)
+                {
+                    for(int s2 = 0; s2 < v; s2++)
+                    {
+                        if(s2 != s)
+                        {
+                            deltas[i][l][s2]++;
+                        }
+                        if(s2 != mv.mAncienSymbole)
+                        {
+                            deltas[mv.mCol][l][s2]++;
+                        }
+                    }
+                }
             }
-            if(i1 > mv.mCol)
+        }*/
+        occurencesCouples[i][mv.mCol][s][mv.mAncienSymbole]--;
+        if(occurencesCouples[i][mv.mCol][s][mv.mSymbole] == 0)
+        {
+            erreursDernierMv--;
+            sousContraintesSymboles[i][s]--;
+            sousContraintesColonnes[i]--;
+            sousContraintesSymboles[mv.mCol][mv.mSymbole]--;
+            sousContraintesColonnes[mv.mCol]--;
+            /*for(int l = 0; l < N; l++)
             {
-                contraintes[mv.mCol][i1][mv.mAncienSymbole][i2] = copieContraintesAncien[i1][i2];
-                contraintes[mv.mCol][i1][mv.mSymbole][i2] = copieContraintesNouveau[i1][i2];
+                if(solution[l*k+i] == s)
+                {
+                    deltas[mv.mCol][l][mv.mSymbole]++;
+                }
+                if(solution[l*k+mv.mCol] == mv.mSymbole)
+                {
+                    deltas[i][l][s]++;
+                }
+            }
+            for(int s2 = 0; s2 < v; s2++)
+            {
+                if(s2 != s)
+                {
+                    deltas[i][mv.mLigne][s2]++;
+                }
+                if(s2 != mv.mSymbole)
+                {
+                    deltas[mv.mCol][mv.mLigne][s2]++;
+                }
+            }*/
+        }
+        /*if(occurencesCouples[i][mv.mCol][s][mv.mSymbole] == 1)
+        {
+            for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s && solution[l*k+mv.mCol] == mv.mSymbole)
+                {
+                    for(int s2 = 0; s2 < v; s2++)
+                    {
+                        if(s2 != s)
+                        {
+                            deltas[i][l][s2]++;
+                        }
+                        if(s2 != mv.mSymbole)
+                        {
+                            deltas[mv.mCol][l][s2]++;
+                        }
+                    }
+                }
+            }
+        }*/
+        occurencesCouples[i][mv.mCol][s][mv.mSymbole]++;
+    }
+    for(int i=mv.mCol + 1; i<k; i++)
+    {
+        int s = solution[mv.mLigne*k+i];
+        if(occurencesCouples[mv.mCol][i][mv.mAncienSymbole][s] == 1)
+        {
+            erreursDernierMv++;
+            sousContraintesSymboles[i][s]++;
+            sousContraintesColonnes[i]++;
+            sousContraintesSymboles[mv.mCol][mv.mAncienSymbole]++;
+            sousContraintesColonnes[mv.mCol]++;
+            /*for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s)
+                {
+                    deltas[mv.mCol][l][mv.mAncienSymbole]--;
+                }
+                if(solution[l*k+mv.mCol] == mv.mAncienSymbole && l != mv.mLigne)
+                {
+                    deltas[i][l][s]--;
+                }
+            }*/
+        }
+        /*if(occurencesCouples[mv.mCol][i][mv.mAncienSymbole][s] == 2)
+        {
+            for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s && solution[l*k+mv.mCol] == mv.mAncienSymbole && l != mv.mLigne)
+                {
+                    for(int s2 = 0; s2 < v; s2++)
+                    {
+                        if(s2 != s)
+                        {
+                            deltas[i][l][s2]++;
+                        }
+                        if(s2 != mv.mAncienSymbole)
+                        {
+                            deltas[mv.mCol][l][s2]++;
+                        }
+                    }
+                }
+            }
+        }*/
+        occurencesCouples[mv.mCol][i][mv.mAncienSymbole][s]--;
+        if(occurencesCouples[mv.mCol][i][mv.mSymbole][s] == 0)
+        {
+            erreursDernierMv--;
+            sousContraintesSymboles[i][s]--;
+            sousContraintesColonnes[i]--;
+            sousContraintesSymboles[mv.mCol][mv.mSymbole]--;
+            sousContraintesColonnes[mv.mCol]--;
+            /*for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s)
+                {
+                    deltas[mv.mCol][l][mv.mSymbole]++;
+                }
+                if(solution[l*k+mv.mCol] == mv.mSymbole)
+                {
+                    deltas[i][l][s]++;
+                }
+            }
+            for(int s2 = 0; s2 < v; s2++)
+            {
+                if(s2 != s)
+                {
+                    deltas[i][mv.mLigne][s2]++;
+                }
+                if(s2 != mv.mSymbole)
+                {
+                    deltas[mv.mCol][mv.mLigne][s2]++;
+                }
+            }*/
+        }
+        /*if(occurencesCouples[mv.mCol][i][mv.mSymbole][s] == 1)
+        {
+            for(int l = 0; l < N; l++)
+            {
+                if(solution[l*k+i] == s && solution[l*k+mv.mCol] == mv.mSymbole)
+                {
+                    for(int s2 = 0; s2 < v; s2++)
+                    {
+                        if(s2 != s)
+                        {
+                            deltas[i][l][s2]++;
+                        }
+                        if(s2 != mv.mSymbole)
+                        {
+                            deltas[mv.mCol][l][s2]++;
+                        }
+                    }
+                }
+            }
+        }*/
+        occurencesCouples[mv.mCol][i][mv.mSymbole][s]++;
+    }
+    solution[k*mv.mLigne+mv.mCol] = mv.mSymbole;
+    erreurs = erreursDernierMv;
+    /*for(int c1 = 0; c1 < k; c1++)
+    {
+        for(int l = 0; l < N; l++)
+        {
+            int s1 = solution[l*k+c1];
+            for(int s = 0; s < v; s++)
+            {
+                if(s != s1)
+                {
+                    deltas[c1][l][s] = calculerDelta(Mouvement(l, c1, s, s1)) - erreurs;
+                }
+                else
+                {
+                    deltas[c1][l][s] = 0;
+                }
             }
         }
-    }
-    erreurs = erreursDernierMv;
+    }*/
+
 }
 
 // Supprime la derniere ligne de la matrice

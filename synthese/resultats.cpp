@@ -1,8 +1,9 @@
 #include "resultats.h"
 
-Resultats::Resultats(double temps, int meilleurCout, int nbIterations) :
+Resultats::Resultats(double temps, int meilleurCout, int nbIterations, bool valide) :
     temps(temps),
     meilleurCout(meilleurCout),
-    nbIterations(nbIterations)
+    nbIterations(nbIterations),
+    valide(valide)
 {
 }

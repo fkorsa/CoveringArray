@@ -444,7 +444,7 @@ int main()
     srand(seed);
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(10, CROISEMENT_SYMBOLE);
+    genererResultats(1, CROISEMENT_SYMBOLE);
 
     // Pour enregistrer l'evolution de la diversite dans le fichier "output" sur une config donne, decommenter
     // cette section

@@ -171,7 +171,7 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();
     chrono::duration<double> duree;
     double dureeMillisecondes;
-    const double tempsMax = 60000*5.4/8.6;
+    const double tempsMax = m_tempsMax*5.4/8.6;
 
     // Initialisation de la meilleure config
     int coutMeilleure = couts[0];
@@ -221,6 +221,12 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
         duree = chrono::system_clock::now()-dateDebut;
         dureeMillisecondes = 1000*duree.count();
     }
-
+    delete meilleureConfig;
+    for(i = 0; i < tailleParents; i++)
+    {
+        delete population[i];
+    }
+    delete[] population;
+    delete[] couts;
     return Resultats(dureeMillisecondes, coutMeilleure, iteration);
 }

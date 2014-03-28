@@ -86,5 +86,6 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
         duree = chrono::system_clock::now()-dateDebut;
         dureeMillisecondes = 1000*duree.count();
     }
+    delete meilleureConfig;
     return Resultats(dureeMillisecondes, coutMeilleure, totalIt);
 }

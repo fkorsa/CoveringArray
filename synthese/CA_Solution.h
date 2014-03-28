@@ -24,8 +24,11 @@ public:
     int verifierSolution(Mouvement mv);
     void enleverLigne();
     Mouvement mouvementSuivant();
-    void reinitialiserMouvementCourant();
+    void reinitialiserMouvement();
+    void mouvementCritiqueSuivant();
+    void reinitialiserMouvementCritique();
     Mouvement mouvementCourant(){return mvtCourant;}
+    Mouvement* mouvementCritique(){return &mvtCourant;}
     Mouvement mouvementAleatoire();
     void appliquerMouvement(Mouvement mv);
 
@@ -34,11 +37,15 @@ public:
 	int N;
 	vector<int> solution;
     int nbIt, nbMvt;
-    int nbContraintes;
     int erreurs, erreursDernierMv;
-    bool ****contraintes;
-    bool **copieContraintesAncien, **copieContraintesNouveau;
+
+private:
+    void trouverMouvementSuivant();
+    void allouerMemoire();
+    int calculerDelta(Mouvement mv);
     Mouvement mvtCourant;
+    int ****occurencesCouples, *sousContraintesColonnes, **sousContraintesSymboles, ***deltas;
+    int nbContraintes;
 };
 
 #endif //CA_SOLUTION_H

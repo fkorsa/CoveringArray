@@ -14,7 +14,7 @@ using namespace std;
 class Generateur
 {
 public:
-    Generateur(int tempsMax, int nbExec);
+    Generateur(int nbExec);
     void TesterTout();
 private:
     enum ALGO_TYPE
@@ -22,6 +22,7 @@ private:
         GLOUTON,
         DESCENTE,
         TABOU,
+        TABOU_DIVERSIFIE,
         RECUIT_SIMULE,
         EVOLUTION
     };
@@ -31,8 +32,14 @@ private:
         CROISEMENT_LIGNE
     };
     void GenererResultats(ALGO_TYPE type);
-    Resultats TesterGlouton();
-    Resultats TesterDescente();
+
+    // Glouton
+    Resultats TesterGlouton(int v, int k);
+    vector<int> couvertureGlouton(int v, int k, float tolerance);
+
+    // Descente
+    int DescenteChoixMouvement(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs);
+    Resultats TesterDescente(int v, int k, int N);
 
     // Evolution
     Resultats TesterEvolution(int v, int k, int N, int tailleParents, int tailleEnfants, float pourcentMutation, TYPE_CROISEMENT type);

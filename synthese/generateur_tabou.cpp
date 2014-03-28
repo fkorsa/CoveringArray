@@ -6,40 +6,32 @@
 void Generateur::TabouChoixDiversification(CA_Solution* configTestee, list<Mouvement> *listeMeilleurs, int ***listeTaboue, int iteration,
                           bool*** presence, int ***dernierePresence, int ***frequence, int coutMeilleure)
 {
-    bool minDefini, premiereIteration;
+    bool minDefini;
     int coutTest, coutMin, frequenceNouveau, frequenceAncien;
-    Mouvement mouvementActuel;
+    Mouvement *mouvementActuel;
 
     minDefini = false;
-    premiereIteration = true;
-    mouvementActuel = configTestee->mouvementCourant();
-    while(!mouvementActuel.estFinal)
+    //mouvementActuel = configTestee->mouvementCourant();
+    mouvementActuel = configTestee->mouvementCritique();
+    while(!mouvementActuel->estFinal)
     {
-        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
-        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
-        // des mouvements possibles.
-        if(!premiereIteration)
-        {
-            mouvementActuel = configTestee->mouvementSuivant();
-        }
-        premiereIteration = false;
-        frequenceNouveau = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
+        frequenceNouveau = frequence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mSymbole];
         // Ajustement de la frequence du nouveau symbole pour tenir compte de la presence eventuelle du symbole
         // jusqu'ici
-        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole])
+        if(presence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mSymbole])
         {
-            frequenceNouveau += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole];
+            frequenceNouveau += dernierePresence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mSymbole];
         }
-        frequenceAncien = frequence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
+        frequenceAncien = frequence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mAncienSymbole];
         // Ajustement de la frequence de l'ancien symbole pour tenir compte de sa presence eventuelle
         // jusqu'ici
-        if(presence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole])
+        if(presence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mAncienSymbole])
         {
-            frequenceAncien += dernierePresence[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mAncienSymbole];
+            frequenceAncien += dernierePresence[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mAncienSymbole];
         }
-        coutTest = configTestee->verifierSolution(mouvementActuel) + frequenceNouveau - frequenceAncien;
+        coutTest = configTestee->verifierSolution(*mouvementActuel) + frequenceNouveau - frequenceAncien;
         // Critere tabou
-        if(listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
+        if(listeTaboue[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mSymbole] < iteration
             // si le mouvement est meilleur que les precedents
             && (!minDefini || coutTest <= coutMin))
         {
@@ -52,8 +44,12 @@ void Generateur::TabouChoixDiversification(CA_Solution* configTestee, list<Mouve
             coutMin = coutTest;
             minDefini = true;
             // Ajout de ce mouvement dans la liste des meilleurs
-            listeMeilleurs->push_back(mouvementActuel);
+            listeMeilleurs->push_back(*mouvementActuel);
         }
+        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
+        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
+        // des mouvements possibles.
+        configTestee->mouvementCritiqueSuivant();
     }
 }
 
@@ -63,25 +59,18 @@ void Generateur::TabouChoixMouvement(CA_Solution* configTestee, list<Mouvement> 
 {
     bool minDefini, premiereIteration;
     int coutTest, coutActuelle, coutMin;
-    Mouvement mouvementActuel;
+    Mouvement *mouvementActuel;
 
     minDefini = false;
     premiereIteration = true;
     coutActuelle = configTestee->erreurs;
-    mouvementActuel = configTestee->mouvementCourant();
-    while(!mouvementActuel.estFinal)
+    //mouvementActuel = configTestee->mouvementCourant();
+    mouvementActuel = configTestee->mouvementCritique();
+    while(!mouvementActuel->estFinal)
     {
-        // La methode mouvement() parcourt tous les mouvements possibles : a chaque appel,
-        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
-        // des mouvements possibles.
-        if(!premiereIteration)
-        {
-            mouvementActuel = configTestee->mouvementSuivant();
-        }
-        premiereIteration = false;
-        coutTest = configTestee->verifierSolution(mouvementActuel);
+        coutTest = configTestee->verifierSolution(*mouvementActuel);
         // Critere tabou
-        if((listeTaboue[mouvementActuel.mLigne][mouvementActuel.mCol][mouvementActuel.mSymbole] < iteration
+        if((listeTaboue[mouvementActuel->mLigne][mouvementActuel->mCol][mouvementActuel->mSymbole] < iteration
             // Critere d'aspiration
             || coutTest < coutMeilleure)
             // si le mouvement est meilleur que les precedents
@@ -96,8 +85,12 @@ void Generateur::TabouChoixMouvement(CA_Solution* configTestee, list<Mouvement> 
             coutMin = coutTest;
             minDefini = true;
             // Ajout de ce mouvement dans la liste des meilleurs
-            listeMeilleurs->push_back(mouvementActuel);
+            listeMeilleurs->push_back(*mouvementActuel);
         }
+        // La methode mouvementCritiqueSuivant() parcourt le voisinage critique : a chaque appel,
+        // elle renvoie le mouvement courant puis prend le mouvement suivant dans l'espace
+        // des mouvements critiques.
+        configTestee->mouvementCritiqueSuivant();
     }
 }
 
@@ -197,7 +190,8 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     // Critere d'arret : une minute de temps d'execution, ou bien une solution trouvee
     while(coutMeilleure > 0 && dureeMillisecondes < tempsMax)
     {
-        configTestee->reinitialiserMouvementCourant();
+        //configTestee->reinitialiserMouvement();
+        configTestee->reinitialiserMouvementCritique();
         listeMeilleurs.clear();
 
         dureePhase = chrono::system_clock::now()-dateDebutPhase;
@@ -237,7 +231,12 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
         // Application des conséquences
         if(tailleListe > 0)
         {
+            //int coutFutur = configTestee->verifierSolution(mv);
             configTestee->appliquerMouvement(mv); // Déplacement entériné
+            /*if(iteration%5 == 0 && configTestee->verifierSolution() != coutFutur)
+            {
+                cout << "sdlfkj" << endl;
+            }*/
             // L'ancien symbole est maintenant tabou
             listeTaboue[mv.mLigne][mv.mCol][mv.mAncienSymbole] = iteration + longueurListe;
             // Actualisation des memoires a long terme
@@ -253,7 +252,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
                 delete meilleureConfig;
                 meilleureConfig = new CA_Solution(*configTestee);
                 coutMeilleure = configTestee->erreurs;
-                //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+                cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
             }
             vraisMouvementsTotal++;
         }
@@ -312,6 +311,6 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
         delete[] listeTaboue[i1];
     }
     delete[] listeTaboue;
-
+    delete meilleureConfig;
     return Resultats(dureeMillisecondes, coutMeilleure, iteration);
 }
