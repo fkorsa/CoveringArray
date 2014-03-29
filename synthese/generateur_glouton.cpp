@@ -194,14 +194,15 @@ Resultats Generateur::TesterGlouton(int v, int k)
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();
     chrono::duration<double> duree;
     double dureeMillisecondes;
-    const double tempsMax = m_tempsMax*5.4/8.6;
+    const double tempsMax = m_tempsMax*m_dfmax;
 
     while(dureeMillisecondes < tempsMax)
     {
-        int taille = couvertureGlouton(v,k,0.2).size()/k;
+        int taille = couvertureGlouton(v,k,0.3).size()/k;
         if(minN == 0 || minN > taille)
         {
             minN = taille;
+            cout << "meilleur trouve : " << minN << endl;
         }
         iteration++;
         // Actualisation du temps passe

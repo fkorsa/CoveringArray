@@ -98,7 +98,7 @@ void Generateur::TabouChoixMouvement(CA_Solution* configTestee, list<Mouvement> 
 Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bool diversification)
 {
     Mouvement mv;
-    int iteration = 1;
+    int iteration = 1, nbLignesCourant = configInit->N, dernierNbLignesValide = -1;
     int vraisMouvementsTotal = 0, fmin, fmax, coutActuelle;
     int k = configInit->k, v = configInit->v, N = configInit->N;
     CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
@@ -109,7 +109,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now(), dateDebutPhase = dateDebut;
     chrono::duration<double> duree, dureePhase;
     double dureeMillisecondes;
-    const double tempsMax = m_tempsMax*5.4/8.6;
+    const double tempsMax = m_tempsMax*m_dfmax;
 
     // Variables pour la diversification
     bool ***presence;
@@ -188,7 +188,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     dureeMillisecondes = 1000*duree.count();
 
     // Critere d'arret : une minute de temps d'execution, ou bien une solution trouvee
-    while(coutMeilleure > 0 && dureeMillisecondes < tempsMax)
+    while(dureeMillisecondes < tempsMax)
     {
         //configTestee->reinitialiserMouvement();
         configTestee->reinitialiserMouvementCritique();
@@ -231,12 +231,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
         // Application des conséquences
         if(tailleListe > 0)
         {
-            //int coutFutur = configTestee->verifierSolution(mv);
             configTestee->appliquerMouvement(mv); // Déplacement entériné
-            /*if(iteration%5 == 0 && configTestee->verifierSolution() != coutFutur)
-            {
-                cout << "sdlfkj" << endl;
-            }*/
             // L'ancien symbole est maintenant tabou
             listeTaboue[mv.mLigne][mv.mCol][mv.mAncienSymbole] = iteration + longueurListe;
             // Actualisation des memoires a long terme
@@ -248,11 +243,25 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
                 dernierePresence[mv.mLigne][mv.mCol][mv.mAncienSymbole] = iteration;
             }
             if(configTestee->erreurs < coutMeilleure)
-            { // Mise à jour de la meilleure configuration
-                delete meilleureConfig;
-                meilleureConfig = new CA_Solution(*configTestee);
-                coutMeilleure = configTestee->erreurs;
-                cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+            {
+                if(configTestee->erreurs == 0)
+                {
+                    meilleureConfig->enleverLigne();
+                    delete configTestee;
+                    meilleureConfig->verifierSolution();
+                    configTestee = new CA_Solution(*meilleureConfig);
+                    nbLignesCourant--;
+                    coutMeilleure = configTestee->erreurs;
+                    //cout << "Reduction de lignes" << endl;
+                    dernierNbLignesValide = nbLignesCourant + 1;
+                }
+                else
+                {
+                    delete meilleureConfig;
+                    meilleureConfig = new CA_Solution(*configTestee);
+                    coutMeilleure = configTestee->erreurs;
+                    //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+                }
             }
             vraisMouvementsTotal++;
         }
@@ -312,5 +321,9 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     }
     delete[] listeTaboue;
     delete meilleureConfig;
-    return Resultats(dureeMillisecondes, coutMeilleure, iteration);
+    if(dernierNbLignesValide != -1)
+    {
+        return Resultats(dureeMillisecondes, dernierNbLignesValide, iteration, true);
+    }
+    return Resultats(dureeMillisecondes, N, iteration, false);
 }

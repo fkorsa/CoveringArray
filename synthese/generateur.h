@@ -14,7 +14,7 @@ using namespace std;
 class Generateur
 {
 public:
-    Generateur(int nbExec);
+    Generateur(int nbExec, float dfmax);
     void TesterTout();
 private:
     enum ALGO_TYPE
@@ -58,6 +58,7 @@ private:
     Resultats TesterRecuitSimule(CA_Solution* configInit, double tempInit, double coeff);
     CA_Solution* ConfigurationAleatoire(int v, int k, int N);
     int m_tempsMax, m_nbExec;
+    float m_dfmax;
 };
 
 #endif // GENERATEUR_H

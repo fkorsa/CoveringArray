@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    Generateur gen(1);
+    Generateur gen(10, 5.4/8.6);
     gen.TesterTout();
     /*vector<int> res(12);
     res = {0, 0, 0, 0, 1, 0, 1, 2, 1, 0, 2, 1};

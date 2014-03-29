@@ -1,7 +1,8 @@
 #include "generateur.h"
 
-Generateur::Generateur(int nbExec) :
-    m_nbExec(nbExec)
+Generateur::Generateur(int nbExec, float dfmax) :
+    m_nbExec(nbExec),
+    m_dfmax(dfmax)
 {
     srand(time(NULL));
 }
@@ -26,7 +27,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
     ifstream infile;
     ofstream outfile;
 
-    int nbSymboles, nbColonnes, nbLignes, coutSolution, longueurListe;
+    int nbSymboles, nbColonnes, nbLignes, coutSolution, longueurListe, nbSolutionsValides;
     double coutMoyen, coutMin, coutMax;
     double tempsMoyen, temps;
     double itMoyen, nbIt;
@@ -76,6 +77,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
             cout << nbSymboles << " "
                     << nbColonnes << " "
                     << nbLignes << " " << endl;
+            nbSolutionsValides = 0;
             // On execute l'algorithme 10 fois
             for(int i = 0; i < m_nbExec; i++)
             {
@@ -106,29 +108,33 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                     resultatsCourants = TesterEvolution(nbSymboles, nbColonnes, nbLignes, 20, 20, 0.0001, CROISEMENT_LIGNE);
                     break;
                 }
-                temps = resultatsCourants.temps;
-                coutSolution = resultatsCourants.meilleurCout;
-                nbIt = resultatsCourants.nbIterations;
-                if(i == 0)
+                if(resultatsCourants.valide)
                 {
-                    coutMin = coutSolution;
+                    temps = resultatsCourants.temps;
+                    coutSolution = resultatsCourants.meilleurCout;
+                    nbIt = resultatsCourants.nbIterations;
+                    if(i == 0)
+                    {
+                        coutMin = coutSolution;
+                    }
+                    if(coutMin > coutSolution)
+                    {
+                        coutMin = coutSolution;
+                    }
+                    if(coutMax < coutSolution)
+                    {
+                        coutMax = coutSolution;
+                    }
+                    coutMoyen += coutSolution;
+                    tempsMoyen += temps;
+                    itMoyen += nbIt;
+                    nbSolutionsValides++;
                 }
-                if(coutMin > coutSolution)
-                {
-                    coutMin = coutSolution;
-                }
-                if(coutMax < coutSolution)
-                {
-                    coutMax = coutSolution;
-                }
-                coutMoyen += coutSolution;
-                tempsMoyen += temps;
-                itMoyen += nbIt;
             }
-            coutMoyen /= m_nbExec;
-            itMoyen /= m_nbExec;
-            tempsMoyen /= m_nbExec;
-            tempsMoyen *= (8.6/5.4);
+            coutMoyen /= nbSolutionsValides;
+            itMoyen /= nbSolutionsValides;
+            tempsMoyen /= nbSolutionsValides;
+            tempsMoyen *= 1/m_dfmax;
             // On enregistre les donnees dans le fichier output
             outfile << nbSymboles << " "
                     << nbColonnes << " "
@@ -142,13 +148,8 @@ void Generateur::GenererResultats(ALGO_TYPE type)
     }
 }
 
-
 void Generateur::TesterTout()
 {
-    cout << "Generation de descente" << endl;
-    GenererResultats(DESCENTE);
-
-    /*
     cout << "Generation de tabou" << endl;
     GenererResultats(TABOU);
     cout << "Generation de descente" << endl;
@@ -160,6 +161,5 @@ void Generateur::TesterTout()
     cout << "Generation de recuit" << endl;
     GenererResultats(RECUIT_SIMULE);
     cout << "Generation de evolution" << endl;
-    GenererResultats(EVOLUTION);*/
-
+    GenererResultats(EVOLUTION);
 }

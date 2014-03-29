@@ -191,10 +191,10 @@ void mutation(CA_Solution **populationEnfants, int tailleEnfants, int v, int k, 
 {
     int e, indice, col, ligne, symbole;
     int limite = pourcent*k*N;
-    /*if(limite == 0)
+    if(limite == 0)
     {
         limite = 1;
-    }*/
+    }
     for(e = 0; e < tailleEnfants; e++)
     {
         for(indice = 0; indice < limite; indice++)
@@ -309,7 +309,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
             delete meilleureConfig;
             meilleureConfig = new CA_Solution(*(population[0]));
             coutMeilleure = couts[0];
-            //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+            cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
         }
 
         iteration++;
@@ -444,7 +444,7 @@ int main()
     srand(seed);
 
     // Pour generer toutes les stats sur les differentes configs, decommenter cette section
-    genererResultats(1, CROISEMENT_SYMBOLE);
+    genererResultats(1, CROISEMENT_LIGNES);
 
     // Pour enregistrer l'evolution de la diversite dans le fichier "output" sur une config donne, decommenter
     // cette section
@@ -457,6 +457,6 @@ int main()
     }*/
 
     // Pour effectuer des tests sur une configuration en particulier, decommenter cette section
-    /*CA_Solution* configEvolution = evolution(8, 15, 130, 20, 20, nullptr, 0.0001, CROISEMENT_SYMBOLE, false);
+    /*CA_Solution* configEvolution = evolution(3, 20, 20, 20, 20, nullptr, 0.001, CROISEMENT_SYMBOLE, false);
     cout << "Erreurs : " << configEvolution->erreurs << " iterations : " << configEvolution->nbIt << endl;*/
 }

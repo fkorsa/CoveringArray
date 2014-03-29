@@ -45,7 +45,7 @@ int Generateur::DescenteChoixMouvement(CA_Solution* configTestee, list<Mouvement
 Resultats Generateur::TesterDescente(int v, int k, int N)
 {
     Mouvement mv;
-    int iteration = 1, nbLignesCourant = N;
+    int iteration = 1, nbLignesCourant = N, dernierNbLignesValide = -1;
     int vraisMouvementsTotal = 0, coutMeilleurVoisin, coutActuelle;
     CA_Solution* configTestee = ConfigurationAleatoire(v, k, N); // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configTestee); // Meilleures des configurations testées jusqu'alors
@@ -55,7 +55,7 @@ Resultats Generateur::TesterDescente(int v, int k, int N)
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now(), dateDebutPhase = dateDebut;
     chrono::duration<double> duree, dureePhase;
     double dureeMillisecondes;
-    const double tempsMax = m_tempsMax*5.4/8.6;
+    const double tempsMax = m_tempsMax*m_dfmax;
 
     int coutMeilleure = configTestee->verifierSolution();
     coutActuelle = coutMeilleure;
@@ -107,14 +107,15 @@ Resultats Generateur::TesterDescente(int v, int k, int N)
                     configTestee = new CA_Solution(*meilleureConfig);
                     nbLignesCourant--;
                     coutMeilleure = configTestee->erreurs;
-                    cout << "Reduction de lignes" << endl;
+                    //cout << "Reduction de lignes" << endl;
+                    dernierNbLignesValide = nbLignesCourant + 1;
                 }
                 else
                 {
                     delete meilleureConfig;
                     meilleureConfig = new CA_Solution(*configTestee);
                     coutMeilleure = configTestee->erreurs;
-                    cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+                    //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
                 }
             }
             vraisMouvementsTotal++;
@@ -139,9 +140,9 @@ Resultats Generateur::TesterDescente(int v, int k, int N)
     }
     delete meilleureConfig;
     delete configTestee;
-    if(coutMeilleure == 0)
+    if(dernierNbLignesValide != -1)
     {
-        return Resultats(dureeMillisecondes, nbLignesCourant, iteration, true);
+        return Resultats(dureeMillisecondes, dernierNbLignesValide, iteration, true);
     }
-    return Resultats(dureeMillisecondes, nbLignesCourant, iteration, false);
+    return Resultats(dureeMillisecondes, N, iteration, false);
 }

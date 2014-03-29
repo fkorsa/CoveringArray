@@ -134,10 +134,10 @@ void Generateur::EvolutionMutation(CA_Solution **populationEnfants, int tailleEn
 {
     int e, indice, col, ligne, symbole;
     int limite = pourcent*k*N;
-    /*if(limite == 0)
+    if(limite == 0)
     {
         limite = 1;
-    }*/
+    }
     for(e = 0; e < tailleEnfants; e++)
     {
         for(indice = 0; indice < limite; indice++)
@@ -153,7 +153,7 @@ void Generateur::EvolutionMutation(CA_Solution **populationEnfants, int tailleEn
 Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, int tailleEnfants, float pourcentMutation, TYPE_CROISEMENT type)
 {
     // Variables pour l'algorithme tabou de base
-    int iteration = 1;
+    int iteration = 1, nbLignesCourant = N, dernierNbLignesValide = -1;
     int i;
     CA_Solution **population = new CA_Solution*[tailleParents+tailleEnfants];
     int *couts = new int[tailleParents+tailleEnfants];
@@ -171,7 +171,7 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();
     chrono::duration<double> duree;
     double dureeMillisecondes;
-    const double tempsMax = m_tempsMax*5.4/8.6;
+    const double tempsMax = m_tempsMax*m_dfmax;
 
     // Initialisation de la meilleure config
     int coutMeilleure = couts[0];
@@ -181,20 +181,20 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
     dureeMillisecondes = 1000*duree.count();
 
     // Critere d'arret : une minute de temps d'execution, ou bien une solution trouvee
-    while(coutMeilleure > 0 && dureeMillisecondes < tempsMax)
+    while(dureeMillisecondes < tempsMax)
     {
         // Croisement
         if(type == CROISEMENT_LIGNE)
         {
-            EvolutionCroisementLigne(population, tailleParents, tailleEnfants, v, k, N);
+            EvolutionCroisementLigne(population, tailleParents, tailleEnfants, v, k, nbLignesCourant);
         }
         else
         {
-            EvolutionCroisementSymbole(population, tailleParents, tailleEnfants, v, k, N);
+            EvolutionCroisementSymbole(population, tailleParents, tailleEnfants, v, k, nbLignesCourant);
         }
 
         // Mutation
-        EvolutionMutation(&population[tailleParents], tailleEnfants, v, k, N, pourcentMutation);
+        EvolutionMutation(&population[tailleParents], tailleEnfants, v, k, nbLignesCourant, pourcentMutation);
 
         // Calcul et des couts, tri dans l'ordre croissant du tableau des couts et tri de la population
         // dans le meme ordre
@@ -209,9 +209,21 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
         // Mise à jour de la meilleure configuration
         if(couts[0] < coutMeilleure)
         {
+            if(couts[0] == 0)
+            {
+                for(i = 0; i < tailleParents; i++)
+                {
+                    population[i]->enleverLigne();
+                }
+                EvolutionCalculerCouts(population, couts, tailleParents);
+
+                nbLignesCourant--;
+                //cout << "Reduction de lignes" << endl;
+                dernierNbLignesValide = nbLignesCourant + 1;
+            }
+            coutMeilleure = couts[0];
             delete meilleureConfig;
             meilleureConfig = new CA_Solution(*(population[0]));
-            coutMeilleure = couts[0];
             //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
         }
 
@@ -228,5 +240,9 @@ Resultats Generateur::TesterEvolution(int v, int k, int N, int tailleParents, in
     }
     delete[] population;
     delete[] couts;
-    return Resultats(dureeMillisecondes, coutMeilleure, iteration);
+    if(dernierNbLignesValide != -1)
+    {
+        return Resultats(dureeMillisecondes, dernierNbLignesValide, iteration, true);
+    }
+    return Resultats(dureeMillisecondes, N, iteration, false);
 }

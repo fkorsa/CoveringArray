@@ -4,7 +4,7 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
 {
     Mouvement mouvementActuel;
     double T = tempInit;
-    int itCpt = 0, statiqueCpt = 0, totalIt = 0;
+    int itCpt = 0, statiqueCpt = 0, totalIt = 0, nbLignesCourant = configInit->N, dernierNbLignesValide = -1;
     int vraisMouvements = 0, vraisMouvementsTotal = 0, fmin, fmax, coutTest, coutActuelle;
     CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
@@ -18,13 +18,13 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
     chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();
     chrono::duration<double> duree;
     double dureeMillisecondes;
-    const double tempsMax = m_tempsMax*5.4/8.6;
+    const double tempsMax = m_tempsMax*m_dfmax;
 
     duree = chrono::system_clock::now()-dateDebut;
     dureeMillisecondes = 1000*duree.count();
 
     // Critere d'arret : une minute de temps d'execution, ou bien une solution trouvee
-    while(coutMeilleure > 0 && dureeMillisecondes < tempsMax)
+    while(dureeMillisecondes < tempsMax)
     {
         // On génère un voisin aléatoire de S
         mouvementActuel = configTestee->mouvementAleatoire();
@@ -55,9 +55,24 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
             configTestee->appliquerMouvement(mouvementActuel); // Déplacement entériné
             if(coutTest < coutMeilleure)
             { // Mise à jour de la meilleure configuration (pas forcément S' si on a tiré au sort en faveur de la dégradation)
-                delete meilleureConfig;
-                meilleureConfig = new CA_Solution(*configTestee);
-                coutMeilleure = coutTest;
+                if(configTestee->erreurs == 0)
+                {
+                    meilleureConfig->enleverLigne();
+                    delete configTestee;
+                    meilleureConfig->verifierSolution();
+                    configTestee = new CA_Solution(*meilleureConfig);
+                    nbLignesCourant--;
+                    coutMeilleure = configTestee->erreurs;
+                    //cout << "Reduction de lignes" << endl;
+                    dernierNbLignesValide = nbLignesCourant + 1;
+                }
+                else
+                {
+                    delete meilleureConfig;
+                    meilleureConfig = new CA_Solution(*configTestee);
+                    coutMeilleure = coutTest;
+                    //cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+                }
                 statiqueCpt = 0;
                 itCpt--;
             }
@@ -87,5 +102,9 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
         dureeMillisecondes = 1000*duree.count();
     }
     delete meilleureConfig;
-    return Resultats(dureeMillisecondes, coutMeilleure, totalIt);
+    if(dernierNbLignesValide != -1)
+    {
+        return Resultats(dureeMillisecondes, dernierNbLignesValide, totalIt, true);
+    }
+    return Resultats(dureeMillisecondes, nbLignesCourant, totalIt, false);
 }
