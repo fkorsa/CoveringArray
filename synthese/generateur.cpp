@@ -27,10 +27,11 @@ void Generateur::GenererResultats(ALGO_TYPE type)
     ifstream infile;
     ofstream outfile;
 
-    int nbSymboles, nbColonnes, nbLignes, coutSolution, longueurListe, nbSolutionsValides;
+    int nbSymboles, nbColonnes, nbLignes, coutSolution, longueurListe, nbSolutionsValides, numeroExec;
+    int *lignes = new int[m_nbExec];
     double coutMoyen, coutMin, coutMax;
     double tempsMoyen, temps;
-    double itMoyen, nbIt;
+    double itMoyen, nbIt, ecartType;
     Resultats resultatsCourants(0, 0, 0);
     CA_Solution* configInit;
 
@@ -64,7 +65,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
 
     if(outfile.is_open())
     {
-        outfile << "NombreSymboles NombreColonnes CoutMin CoutMoyen CoutMax TempsMoyen ItMoyen" << endl;
+        outfile << "NombreSymboles NombreColonnes CoutMin CoutMoyen CoutMax TempsMoyen ItMoyen EcartType NbEchantillons" << endl;
         while (infile >> nbSymboles >> nbColonnes >> nbLignes >> m_tempsMax)
         {
             m_tempsMax *= 1000;
@@ -81,9 +82,11 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                     << nbColonnes << " "
                     << nbLignes << " " << endl;
             nbSolutionsValides = 0;
+            numeroExec = 1;
             // On execute l'algorithme 10 fois
-            for(int i = 0; i < m_nbExec; i++)
+            while(nbSolutionsValides < m_nbExec && numeroExec < 20)
             {
+                cout << "Execution numero " << numeroExec++ << " en cours..." << endl;
                 switch(type)
                 {
                 case GLOUTON:
@@ -116,7 +119,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                     temps = resultatsCourants.temps;
                     coutSolution = resultatsCourants.meilleurCout;
                     nbIt = resultatsCourants.nbIterations;
-                    if(i == 0)
+                    if(nbSolutionsValides == 0)
                     {
                         coutMin = coutSolution;
                     }
@@ -131,6 +134,7 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                     coutMoyen += coutSolution;
                     tempsMoyen += temps;
                     itMoyen += nbIt;
+                    lignes[nbSolutionsValides] = coutSolution;
                     nbSolutionsValides++;
                 }
             }
@@ -138,6 +142,12 @@ void Generateur::GenererResultats(ALGO_TYPE type)
             itMoyen /= nbSolutionsValides;
             tempsMoyen /= nbSolutionsValides;
             tempsMoyen *= 1/m_dfmax;
+            ecartType = 0;
+            for(int i=0; i<nbSolutionsValides; i++)
+            {
+                ecartType += pow(lignes[i]-coutMoyen, 2);
+            }
+            ecartType = sqrt(ecartType/nbSolutionsValides);
             // On enregistre les donnees dans le fichier output
             outfile << nbSymboles << " "
                     << nbColonnes << " "
@@ -145,7 +155,9 @@ void Generateur::GenererResultats(ALGO_TYPE type)
                     << coutMoyen << " "
                     << coutMax << " "
                     << tempsMoyen << " "
-                    << itMoyen << endl;
+                    << itMoyen << " "
+                    << ecartType << " "
+                    << numeroExec - 1 << endl;
         }
         outfile.close();
     }
@@ -155,7 +167,7 @@ void Generateur::TesterTout()
 {
     cout << "Generation de tabou" << endl;
     GenererResultats(TABOU);
-    cout << "Generation de descente" << endl;
+    /*cout << "Generation de descente" << endl;
     GenererResultats(DESCENTE);
     cout << "Generation de glouton" << endl;
     GenererResultats(GLOUTON);
@@ -164,5 +176,5 @@ void Generateur::TesterTout()
     cout << "Generation de recuit" << endl;
     GenererResultats(RECUIT_SIMULE);
     cout << "Generation de evolution" << endl;
-    GenererResultats(EVOLUTION);
+    GenererResultats(EVOLUTION);*/
 }
