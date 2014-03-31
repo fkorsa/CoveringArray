@@ -45,9 +45,12 @@ void Generateur::GenererResultats(ALGO_TYPE type)
         outfile.open("outputDescente");
         break;
     case TABOU:
-    case TABOU_DIVERSIFIE:
         infile.open("inputTabou");
         outfile.open("outputTabou");
+        break;
+    case TABOU_DIVERSIFIE:
+        infile.open("inputTabou");
+        outfile.open("outputTabouDiversifie");
         break;
     case RECUIT_SIMULE:
         infile.open("inputRecuit");

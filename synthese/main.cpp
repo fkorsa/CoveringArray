@@ -6,6 +6,6 @@ using namespace std;
 
 int main()
 {
-    Generateur gen(1, 5.4/8.6);
+    Generateur gen(10, 5.4/8.6);
     gen.TesterTout();
 }
