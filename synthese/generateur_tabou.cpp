@@ -101,7 +101,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     int iteration = 1, nbLignesCourant = configInit->N, dernierNbLignesValide = -1;
     int vraisMouvementsTotal = 0, fmin, fmax, coutActuelle;
     int k = configInit->k, v = configInit->v, N = configInit->N;
-    CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
+    CA_Solution* configTestee = new CA_Solution(*configInit); // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
     list<Mouvement> listeMeilleurs;
 
@@ -180,7 +180,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
         }
     }
 
-    int coutMeilleure = configInit->verifierSolution();
+    int coutMeilleure = configTestee->verifierSolution();
     meilleureConfig->erreurs = coutMeilleure;
     fmin = fmax = coutMeilleure;
 
@@ -321,6 +321,7 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     }
     delete[] listeTaboue;
     delete meilleureConfig;
+    delete configTestee;
     if(dernierNbLignesValide != -1)
     {
         return Resultats(dureeMillisecondes, dernierNbLignesValide, iteration, true);

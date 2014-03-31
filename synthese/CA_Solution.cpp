@@ -644,6 +644,11 @@ void CA_Solution::appliquerMouvement(Mouvement mv)
 void CA_Solution::enleverLigne()
 {
     solution.resize(k*(--N));
+
+    for(int i1=0; i1<k; i1++)
+    {
+        delete[] deltas[i1][N];
+    }
 }
 
 // effectue un mouvement aléatoire dans une configuration donnée

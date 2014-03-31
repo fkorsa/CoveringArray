@@ -6,10 +6,10 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
     double T = tempInit;
     int itCpt = 0, statiqueCpt = 0, totalIt = 0, nbLignesCourant = configInit->N, dernierNbLignesValide = -1;
     int vraisMouvements = 0, vraisMouvementsTotal = 0, fmin, fmax, coutTest, coutActuelle;
-    CA_Solution* configTestee = configInit; // Configuration S' suite à un mouvement
+    CA_Solution* configTestee = new CA_Solution(*configInit); // Configuration S' suite à un mouvement
     CA_Solution* meilleureConfig = new CA_Solution(*configInit); // Meilleures des configurations testées jusqu'alors
 
-    int coutMeilleure = configInit->verifierSolution();
+    int coutMeilleure = configTestee->verifierSolution();
     meilleureConfig->erreurs = coutMeilleure;
     fmin = fmax = coutMeilleure;
 
@@ -102,6 +102,7 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
         dureeMillisecondes = 1000*duree.count();
     }
     delete meilleureConfig;
+    delete configTestee;
     if(dernierNbLignesValide != -1)
     {
         return Resultats(dureeMillisecondes, dernierNbLignesValide, totalIt, true);

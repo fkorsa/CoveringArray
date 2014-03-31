@@ -8,19 +8,21 @@ vector<int> Generateur::couvertureGlouton(int v, int k, float tolerance) // Glou
 
     bool**** contraintes; // contraintes[k][k][v][v]
     // Génère toutes les contraintes élémentaires
-    contraintes = (bool****) malloc(k*sizeof(bool***));
+    contraintes = new bool***[k];
     for(int i1=0; i1<k; i1++) {
-        contraintes[i1] = (bool***) malloc(k*sizeof(bool**));
+        contraintes[i1] = new bool**[k];
         for(int i2=0; i2<k; i2++) {
-            contraintes[i1][i2] = (bool**) malloc(v*sizeof(bool*));
+            contraintes[i1][i2] = new bool*[v];
             for(int i3=0; i3<v; i3++) {
-                contraintes[i1][i2][i3] = (bool*) malloc(v*sizeof(bool));
+                contraintes[i1][i2][i3] = new bool[v];
                 for(int i4=0; i4<v; i4++) {
                     contraintes[i1][i2][i3][i4] = false;
                 }
             }
         }
     }
+
+    int* scores = new int[v]; // Score de résolution de contraintes pour chaque symbole possible
 
     // Algorithme glouton (avec part d'aléatoire si tolerance != 0)
     vector<int> resultat(0);
@@ -85,12 +87,13 @@ vector<int> Generateur::couvertureGlouton(int v, int k, float tolerance) // Glou
                 }
                 resultat[indexLignes*k+colonne] = symbElu; // Insertion du symbole élu
 
+                delete[] scores;
+
             } else { // Remplissage des autres colonnes de la ligne
 
                 int premierPassage = 1; // A voir comme un booléen, on n'a pas encore effectué de second passage (voir suite)
                 int symbMax = -1; // Symbole qui maximise le critère glouton
                 int compMax = -1; // Compteur de contraintes qu'il peut satisfaire associé
-                int* scores = new int[v]; // Score de résolution de contraintes pour chaque symbole possible
 
                 for(int symb=0; symb<v; symb++) { // Test de chaque symbole possible
                     int symbComp = 0; // Compteur pour le symbole testé en cours
@@ -120,7 +123,6 @@ vector<int> Generateur::couvertureGlouton(int v, int k, float tolerance) // Glou
 
                     symbMax = -1; // Symbole qui maximise le critère glouton
                     compMax = -1; // Compteur de contraintes qu'il peut satisfaire associé
-                    scores = new int[v]; // Score de résolution de contraintes pour chaque symbole possible
 
                     for(int symb=0; symb<v; symb++) { // Test de chaque symbole
                         int symbComp = 0; // Compteur pour le symbole en cours
@@ -181,6 +183,18 @@ vector<int> Generateur::couvertureGlouton(int v, int k, float tolerance) // Glou
 
         // cout << "Ligne " << indexLignes << " ecrite, " << contraintesSatisfaites << " contraintes satisfaites au total, reste " << nbContraintes-contraintesSatisfaites << endl;
     } // Fin WHILE
+    delete[] scores;
+
+    for(int i1=0; i1<k; i1++) {
+        for(int i2=0; i2<k; i2++) {
+            for(int i3=0; i3<v; i3++) {
+                delete[] contraintes[i1][i2][i3];
+            }
+            delete[] contraintes[i1][i2];
+        }
+        delete[] contraintes[i1];
+    }
+    delete[] contraintes;
     return resultat;
 } // Fin fonction couvertureGlouton
 
@@ -196,13 +210,16 @@ Resultats Generateur::TesterGlouton(int v, int k)
     double dureeMillisecondes;
     const double tempsMax = m_tempsMax*m_dfmax;
 
+    duree = chrono::system_clock::now()-dateDebut;
+    dureeMillisecondes = 1000*duree.count();
+
     while(dureeMillisecondes < tempsMax)
     {
         int taille = couvertureGlouton(v,k,0.3).size()/k;
         if(minN == 0 || minN > taille)
         {
             minN = taille;
-            cout << "meilleur trouve : " << minN << endl;
+            //cout << "meilleur trouve : " << minN << endl;
         }
         iteration++;
         // Actualisation du temps passe
