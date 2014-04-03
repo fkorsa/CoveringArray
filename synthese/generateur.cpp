@@ -165,16 +165,16 @@ void Generateur::GenererResultats(ALGO_TYPE type)
 
 void Generateur::TesterTout()
 {
-    cout << "Generation de tabou" << endl;
+    /*cout << "Generation de tabou" << endl;
     GenererResultats(TABOU);
-    /*cout << "Generation de descente" << endl;
+    cout << "Generation de descente" << endl;
     GenererResultats(DESCENTE);
     cout << "Generation de glouton" << endl;
     GenererResultats(GLOUTON);
     cout << "Generation de tabou diversifie" << endl;
     GenererResultats(TABOU_DIVERSIFIE);
     cout << "Generation de recuit" << endl;
-    GenererResultats(RECUIT_SIMULE);
+    GenererResultats(RECUIT_SIMULE);*/
     cout << "Generation de evolution" << endl;
-    GenererResultats(EVOLUTION);*/
+    GenererResultats(EVOLUTION);
 }
