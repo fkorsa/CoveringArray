@@ -112,9 +112,9 @@ Resultats Generateur::TesterTabou(CA_Solution* configInit, int longueurListe, bo
     const double tempsMax = m_tempsMax*m_dfmax;
 
     // Variables pour la diversification
-    bool ***presence;
-    int ***dernierePresence;
-    int ***frequence;
+    bool ***presence= nullptr;
+    int ***dernierePresence= nullptr;
+    int ***frequence= nullptr;
 
     // Allocation de la memoire pour les memoires a long terme : presence, frequence et derniere presence des symboles
     if(diversification)

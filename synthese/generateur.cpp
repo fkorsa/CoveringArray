@@ -174,7 +174,11 @@ void Generateur::TesterTout()
     cout << "Generation de tabou diversifie" << endl;
     GenererResultats(TABOU_DIVERSIFIE);
     cout << "Generation de recuit" << endl;
+<<<<<<< HEAD
     GenererResultats(RECUIT_SIMULE);*/
+=======
+    GenererResultats(RECUIT_SIMULE); */
+>>>>>>> 7ff4c520e9a96522da654981ddfffad40a53f69d
     cout << "Generation de evolution" << endl;
     GenererResultats(EVOLUTION);
 }
