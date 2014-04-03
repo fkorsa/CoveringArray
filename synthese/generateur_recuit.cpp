@@ -34,7 +34,7 @@ Resultats Generateur::TesterRecuitSimule(CA_Solution* configInit, double tempIni
         double delta = coutTest - coutActuelle;
 
         // On teste le critère de Métropolis
-        bool metropolis;
+        bool metropolis = false;
         if(delta <= 0)
         {
             metropolis = true;

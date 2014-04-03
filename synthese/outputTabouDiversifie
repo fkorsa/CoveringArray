@@ -1,0 +1,6 @@
+NombreSymboles NombreColonnes CoutMin CoutMoyen CoutMax TempsMoyen ItMoyen EcartType NbEchantillons
+3 20 17 17 17 200004 332614 0 10
+3 60 22 22 22 200002 68662.1 0 19
+5 10 38 38 38 200000 315158 0 10
+8 10 94 94 94 500002 183446 0 19
+8 15 110 110.2 111 500002 128706 0.4 10
