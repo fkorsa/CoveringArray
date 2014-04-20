@@ -282,9 +282,14 @@ int main()
 	int seed = time(NULL);
 	srand(seed);
 
+	cout << "Croisement aleatoire puis descente" << endl;
 	genererResultats(10, CROISEMENT_RAND, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 100, "output_RD");
-//	genererResultats(10, CROISEMENT_AUCUN, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 100, "output_AD");
-//	genererResultats(10, CROISEMENT_GLOUTON, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_GM");
-//	genererResultats(10, CROISEMENT_RAND, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_RM");
-//	genererResultats(10, CROISEMENT_ECHANGE, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_EM");
+	cout << "Pas de croisement puis descente" << endl;
+	genererResultats(10, CROISEMENT_AUCUN, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 100, "output_AD");
+	cout << "Croisement glouton puis mutation" << endl;
+	genererResultats(10, CROISEMENT_GLOUTON, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_GM");
+	cout << "Croisement aleatoire puis mutation" << endl;
+	genererResultats(10, CROISEMENT_RAND, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_RM");
+	cout << "Croisement avec echanges puis mutation" << endl;
+	genererResultats(10, CROISEMENT_ECHANGE, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_EM");
 }
