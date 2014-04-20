@@ -6,7 +6,10 @@ using namespace std;
 #include <stdio.h>
 #include <fstream>
 #include <string>
+#include <list>
 #include <cstdlib>
+
+#include "Mouvement.h"
 
 class CA_Solution
 {
@@ -18,8 +21,8 @@ public:
 
 	void ecrireFichier(string chemin);
 	int verifierSolution();
-	void ajouterLigne();
 	void enleverLigne();
+	int verifierSolutionPartielle(int ligne);
 
 	int v;
 	int k;
@@ -30,6 +33,13 @@ public:
 	bool ****contraintes;
 	int erreurs;
 	int nbIt; 
+
+	// Pour recherche locale
+	int verifierSolution(Mouvement mv);
+    void appliquerMouvement(Mouvement mv);
+	Mouvement mouvement();
+	int erreursDernierMv;
+	bool **copieContraintesAncien, **copieContraintesNouveau;
 };
 
 #endif //CA_SOLUTION_H

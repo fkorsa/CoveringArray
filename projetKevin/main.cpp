@@ -58,7 +58,7 @@ enum TYPE_DEUX_ETAPE
 
 
 // Application de l'algorithme génétique
-CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier, float pourcentMutation, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2)
+CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier, float pourcentMutation, int essaisDesc, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2)
 {
 	// Variables pour l'algorithme de base
 	ofstream& fichierLocal = *fichier;
@@ -66,6 +66,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 	int i;
 	Population* pop = new Population(tailleParents,tailleEnfants);
 	CA_Solution* meilleureConfig = nullptr; // Meilleures des configurations testées jusqu'alors
+	bool croisement;
 
 	// Initialisation de la population
 	pop->remplirGeneration(v, k, N);
@@ -91,29 +92,34 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 		// Croisement
 		if(type1 == CROISEMENT_GLOUTON) {
 			pop->croisementGlouton();
+			croisement = true;
 		}
 		else if(type1 == CROISEMENT_RAND) {
 			pop->croisementRand();
+			croisement = true;
 		}
 		else if(type1 == CROISEMENT_ECHANGE) {
 			pop->croisementEchange();
+			croisement = true;
 		}
 		else {
-			// Pas de croisement
+			pop->taille = tailleParents;
+			pop->tailleEnfants = tailleParents;
+			tailleEnfants = 0;
+			croisement = false;
 		}
-		cout << "Croisement " << iteration << " effectue" << endl;
 
 		// Mutation
 		if(type2 == DEUX_ETAPE_DESCENTE) {
-			pop->descente();
+			pop->descente(essaisDesc, croisement);
 		}
 		else if(type1 == DEUX_ETAPE_MUTATION) {
-			pop->mutation(pourcentMutation);
+			pop->mutation(pourcentMutation, croisement);
 		} else {
 			// On ne fait rien, mais ce cas n'est pas prévu
 		}
 
-		cout << "Mutation " << iteration << " effectue" << endl;
+		cout << "Iteration " << iteration << endl;
 
 		// Enregistrement de la progression du cout dans un fichier
 		if(fichier && iteration%50 == 0)
@@ -153,10 +159,10 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 }
 
 // Génère des résultats selon le croisement et la seconde étape sélectionnés
-void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2)
+void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, int nbParents, int nbEnfants, float pourcMut, int essaisDesc, string output)
 {
 	ifstream infile("inputData");
-	ofstream outfile("output");
+	ofstream outfile(output);
 	int nbSymboles, nbColonnes, nbLignes;
 	double coutMoyen, itMoyen, tempsMoyen;
 	double coutMin, itMin, tempsMin;
@@ -187,7 +193,7 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2)
 			for(int i = 0; i < nbExec; i++)
 			{
 				start = chrono::system_clock::now();
-				solution = evolution(nbSymboles, nbColonnes, nbLignes, 3, 3, nullptr, 0.0001, type1, type2);
+				solution = evolution(nbSymboles, nbColonnes, nbLignes, nbParents, nbEnfants, nullptr, pourcMut, essaisDesc, type1, type2);
 				realTime = chrono::system_clock::now()-start;
 				temps = 1000*realTime.count();
 				if(i == 0)
@@ -255,5 +261,6 @@ int main()
 	int seed = time(NULL);
 	srand(seed);
 
-	genererResultats(1, CROISEMENT_GLOUTON, DEUX_ETAPE_MUTATION);
+	// genererResultats(1, CROISEMENT_RAND, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 200, "output_RD");
+	genererResultats(1, CROISEMENT_AUCUN, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 200, "output_AD");
 }

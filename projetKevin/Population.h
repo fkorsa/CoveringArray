@@ -13,8 +13,8 @@ public:
 	void croisementGlouton();
 	void croisementRand();
 	void croisementEchange();
-	void descente();
-	void mutation(float pourcent);
+	void descente(int nombreEssais, bool croisement);
+	void mutation(float pourcent, bool croisement);
 
 	int taille;
 	int tailleParents;
