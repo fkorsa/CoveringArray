@@ -58,7 +58,7 @@ enum TYPE_DEUX_ETAPE
 
 
 // Application de l'algorithme génétique
-CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier, float pourcentMutation, int essaisDesc, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2)
+CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants, ofstream *fichier, float pourcentMutation, int essaisDesc, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, int maxTemps)
 {
 	// Variables pour l'algorithme de base
 	ofstream& fichierLocal = *fichier;
@@ -77,7 +77,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 	chrono::time_point<chrono::system_clock> dateDebut = chrono::system_clock::now();   
 	chrono::duration<double> duree;
 	double dureeMillisecondes;
-	const double tempsMax = 60000*12.4/8.6;
+	const double tempsMax = maxTemps*12.4/8.6;
 
 	// Initialisation de la meilleure config
 	int coutMeilleure = pop->couts[0];
@@ -113,13 +113,11 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 		if(type2 == DEUX_ETAPE_DESCENTE) {
 			pop->descente(essaisDesc, croisement);
 		}
-		else if(type1 == DEUX_ETAPE_MUTATION) {
+		else if(type2 == DEUX_ETAPE_MUTATION) {
 			pop->mutation(pourcentMutation, croisement);
 		} else {
 			// On ne fait rien, mais ce cas n'est pas prévu
 		}
-
-		cout << "Iteration " << iteration << endl;
 
 		// Enregistrement de la progression du cout dans un fichier
 		if(fichier && iteration%50 == 0)
@@ -143,7 +141,7 @@ CA_Solution* evolution(int v, int k, int N, int tailleParents, int tailleEnfants
 			delete meilleureConfig;
 			meilleureConfig = new CA_Solution(*(pop->generation[0]));
 			coutMeilleure = pop->couts[0];
-			cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
+			// cout << "Meilleure solution trouvee a l'iteration : " << iteration << " de cout : " << coutMeilleure << endl;
 		}
 
 		iteration++;
@@ -163,7 +161,7 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, 
 {
 	ifstream infile("inputData");
 	ofstream outfile(output);
-	int nbSymboles, nbColonnes, nbLignes;
+	int nbSymboles, nbColonnes, nbLignes, maxTps;
 	double coutMoyen, itMoyen, tempsMoyen;
 	double coutMin, itMin, tempsMin;
 	double coutMax, itMax, tempsMax, temps;
@@ -175,7 +173,7 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, 
 	{
 		outfile << "NombreSymboles NombreColonnes NombreLignes CoutMin CoutMoyen CoutMax ItMin ItMoyen ItMax TempsMin TempsMoyen TempsMax" << endl;
 		// Pour chaque configuration dans le fichier "inputData"
-		while (infile >> nbSymboles >> nbColonnes >> nbLignes)
+		while (infile >> nbSymboles >> nbColonnes >> nbLignes >> maxTps)
 		{
 			coutMoyen = 0;
 			itMoyen = 0;
@@ -189,18 +187,26 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, 
 			cout << nbSymboles << " "
 				<< nbColonnes << " "
 				<< nbLignes << " " << endl;
-			// On execute l'algorithme plusieurs fois
+			// On execute l'algorithme plusieurs fois.
+			int nbTentatives = 0; // nombre de tentatives pour un même N
 			for(int i = 0; i < nbExec; i++)
 			{
 				start = chrono::system_clock::now();
-				solution = evolution(nbSymboles, nbColonnes, nbLignes, nbParents, nbEnfants, nullptr, pourcMut, essaisDesc, type1, type2);
+				solution = evolution(nbSymboles, nbColonnes, nbLignes, nbParents, nbEnfants, nullptr, pourcMut, essaisDesc, type1, type2, maxTps);
+				nbTentatives++;
 				realTime = chrono::system_clock::now()-start;
 				temps = 1000*realTime.count();
-				if(i == 0)
+				if(nbTentatives == 1)
 				{
 					coutMin = solution->erreurs;
 					itMin = solution->nbIt;
 					tempsMin = temps;
+					coutMoyen = 0;
+					itMoyen = 0;
+					tempsMoyen = 0;
+					coutMax = 0;
+					itMax = 0;
+					tempsMax = 0;
 				}
 				if(coutMin > solution->erreurs)
 				{
@@ -227,16 +233,26 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, 
 					tempsMax = temps;
 				}
 				coutMoyen += solution->erreurs;
+
 				itMoyen += solution->nbIt;
 				tempsMoyen += temps;
+
+				// Affichage résultat et abaissement du nombre de lignes le cas échéant
+				cout << "Tentative " << i << ", nombre de lignes " << nbLignes << ", cout " << solution->erreurs << endl;
+				if(solution->erreurs == 0) {
+					nbLignes--;
+					nbTentatives = 0;
+				}
 				delete solution;
 			}
-			coutMoyen /= nbExec;
-			itMoyen /= nbExec;
-			tempsMoyen /= nbExec;
+			if (nbTentatives == 0) {nbTentatives = 1;}
+			coutMoyen /= nbTentatives;
+			itMoyen /= nbTentatives;
+			tempsMoyen /= nbTentatives;
 			tempsMoyen *= (8.6/12.4);
 			tempsMin *= (8.6/12.4);
 			tempsMax *= (8.6/12.4);
+
 			// On enregistre les donnees dans le fichier output
 			outfile << nbSymboles << " "
 				<< nbColonnes << " "
@@ -256,11 +272,19 @@ void genererResultats(int nbExec, TYPE_CROISEMENT type1, TYPE_DEUX_ETAPE type2, 
 }
 
 
+void generateur()
+{
+}
+
+
 int main()
 {
 	int seed = time(NULL);
 	srand(seed);
 
-	// genererResultats(1, CROISEMENT_RAND, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 200, "output_RD");
-	genererResultats(1, CROISEMENT_AUCUN, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 200, "output_AD");
+	genererResultats(10, CROISEMENT_RAND, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 100, "output_RD");
+//	genererResultats(10, CROISEMENT_AUCUN, DEUX_ETAPE_DESCENTE, 10, 10, 0.0001, 100, "output_AD");
+//	genererResultats(10, CROISEMENT_GLOUTON, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_GM");
+//	genererResultats(10, CROISEMENT_RAND, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_RM");
+//	genererResultats(10, CROISEMENT_ECHANGE, DEUX_ETAPE_MUTATION, 30, 30, 0.0001, 100, "output_EM");
 }
